@@ -92,6 +92,48 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Convert partial profile to filters and apply them progressively
+  const applyProfileFilters = useCallback((partial: Partial<UserProfile>) => {
+    const newFilters: FilterState = {};
+
+    // Child ages → ageMax filter
+    if (partial.childAges) {
+      const ageMap: Record<string, number> = {
+        'Under 3': 3, '3-5': 5, '6-9': 9, '10-13': 13, 'Mixed ages': 18,
+      };
+      if (ageMap[partial.childAges]) {
+        newFilters.ageMax = ageMap[partial.childAges];
+      }
+    }
+
+    // Interests → categories filter
+    if (partial.interests && partial.interests !== 'Everything') {
+      const interestMap: Record<string, string[]> = {
+        'Arts': ['arts', 'Art'],
+        'Theater': ['theater'],
+        'Outdoor': ['attractions'],
+        'Sports': ['sports'],
+        'Educational': ['books', "Children's Activities"],
+      };
+      if (interestMap[partial.interests]) {
+        newFilters.categories = interestMap[partial.interests];
+      }
+    }
+
+    // Budget → price filters
+    if (partial.budget) {
+      if (partial.budget === 'Free events') {
+        newFilters.isFree = true;
+      } else if (partial.budget === 'Under $20') {
+        newFilters.priceMax = 20;
+      } else if (partial.budget === 'Under $50') {
+        newFilters.priceMax = 50;
+      }
+    }
+
+    onFiltersChange(newFilters);
+  }, [onFiltersChange]);
+
   const advanceOnboarding = useCallback((userAnswer: string) => {
     const userMsg: ChatMessage = { role: 'user', content: userAnswer };
 
@@ -111,6 +153,7 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
       setOnboardingStep(nextStep);
     } else if (onboardingStep === 'childAges') {
       partialProfileRef.current.childAges = userAnswer;
+      applyProfileFilters(partialProfileRef.current);
       const nextQ = ONBOARDING_QUESTIONS.interests;
       setMessages((prev) => [
         ...prev,
@@ -120,6 +163,7 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
       setOnboardingStep('interests');
     } else if (onboardingStep === 'interests') {
       partialProfileRef.current.interests = userAnswer;
+      applyProfileFilters(partialProfileRef.current);
       const nextQ = ONBOARDING_QUESTIONS.budget;
       setMessages((prev) => [
         ...prev,
@@ -139,6 +183,7 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
       storeProfile(finalProfile);
       setOnboardingDone(true);
       setOnboardingStep('done');
+      applyProfileFilters(partialProfileRef.current);
 
       const summary = [
         `Attendees: ${finalProfile.attendees}`,
@@ -158,7 +203,7 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
         },
       ]);
     }
-  }, [onboardingStep]);
+  }, [onboardingStep, applyProfileFilters]);
 
   const sendMessage = useCallback(async (text?: string) => {
     const msgText = (text || input).trim();
