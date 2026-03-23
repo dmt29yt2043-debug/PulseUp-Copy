@@ -208,9 +208,32 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
     }
   }, [onboardingStep, applyProfileFilters]);
 
+  const resetProfile = useCallback(() => {
+    localStorage.removeItem('pulseup_profile');
+    setProfile(null);
+    setOnboardingDone(false);
+    setOnboardingStep('attendees');
+    partialProfileRef.current = {};
+    onFiltersChange({});
+    setMessages([
+      {
+        role: 'assistant',
+        content: ONBOARDING_QUESTIONS.attendees.message,
+        quickReplies: ONBOARDING_QUESTIONS.attendees.quickReplies,
+      },
+    ]);
+  }, [onFiltersChange]);
+
   const sendMessage = useCallback(async (text?: string) => {
     const msgText = (text || input).trim();
     if (!msgText || loading) return;
+
+    // Handle reset command
+    if (msgText.toLowerCase() === 'reset') {
+      setInput('');
+      resetProfile();
+      return;
+    }
 
     // If still onboarding, handle differently
     if (!onboardingDone && onboardingStep !== 'done') {
