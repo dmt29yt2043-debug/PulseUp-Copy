@@ -54,7 +54,16 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
   total: number;
 } {
   const db = getDb();
-  const conditions: string[] = ['status = \'published\''];
+  const conditions: string[] = [
+    'status = \'published\'',
+    // Exclude rewards/loyalty/club programs — not real events
+    'title NOT LIKE \'%Rewards%\'',
+    'title NOT LIKE \'%Royalty%\'',
+    'title NOT LIKE \'%Loyalty%\'',
+    'title NOT LIKE \'%Club Baja%\'',
+    'title NOT LIKE \'%Join Club%\'',
+    'category_l1 NOT IN (\'food\', \'networking\')',
+  ];
   const params: Record<string, unknown> = {};
 
   if (filters.categories && filters.categories.length > 0) {
@@ -115,7 +124,8 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
 
   let distanceSelect = '';
   let distanceCondition = '';
-  let orderBy = 'ORDER BY next_start_at ASC';
+  // Prioritize NYC events with coordinates over nationwide ones
+  let orderBy = 'ORDER BY (CASE WHEN lat IS NOT NULL AND lon IS NOT NULL AND lat BETWEEN 40.4 AND 41.0 AND lon BETWEEN -74.3 AND -73.6 THEN 0 ELSE 1 END), next_start_at ASC';
 
   if (filters.lat !== undefined && filters.lon !== undefined && filters.distance !== undefined) {
     params.lat = filters.lat;
@@ -190,7 +200,7 @@ export function getCategories(): { value: string; label: string }[] {
 export function getEventsForChat(query?: string): { id: number; title: string; category_l1: string; tagline: string; venue_name: string; next_start_at: string; is_free: boolean; price_summary: string; age_label: string; city: string }[] {
   const db = getDb();
 
-  let sql = `SELECT id, title, category_l1, tagline, venue_name, next_start_at, is_free, price_summary, age_label, city FROM events WHERE status = 'published'`;
+  let sql = `SELECT id, title, category_l1, tagline, venue_name, next_start_at, is_free, price_summary, age_label, city FROM events WHERE status = 'published' AND title NOT LIKE '%Rewards%' AND title NOT LIKE '%Royalty%' AND title NOT LIKE '%Loyalty%' AND title NOT LIKE '%Club Baja%' AND title NOT LIKE '%Join Club%' AND category_l1 NOT IN ('food', 'networking')`;
   const params: Record<string, unknown> = {};
 
   if (query) {

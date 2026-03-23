@@ -107,8 +107,8 @@ function MapViewInner({
     if (!containerRef.current || mapRef.current) return;
 
     const map = L.map(containerRef.current, {
-      center: [40.7128, -74.006],
-      zoom: 11,
+      center: [40.7580, -73.9855], // Midtown Manhattan
+      zoom: 13,
       zoomControl: true,
     });
 
