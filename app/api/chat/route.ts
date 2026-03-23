@@ -180,26 +180,28 @@ export async function POST(request: Request) {
 
       // Build tool responses for ALL tool_calls (OpenAI requires this)
       const toolResponses: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
-        responseMessage.tool_calls.map((tc) => ({
-          role: 'tool' as const,
-          tool_call_id: tc.id,
-          content: tc.function.name === 'extract_filters'
-            ? JSON.stringify({
-                total: eventsResult.total,
-                events: eventsResult.events.map((e) => ({
-                  id: e.id,
-                  title: e.title,
-                  tagline: e.tagline,
-                  venue_name: e.venue_name,
-                  next_start_at: e.next_start_at,
-                  is_free: e.is_free,
-                  price_summary: e.price_summary,
-                  age_label: e.age_label,
-                  rating_avg: e.rating_avg,
-                })),
-              })
-            : JSON.stringify({ result: 'ok' }),
-        }));
+        responseMessage.tool_calls
+          .filter((tc): tc is OpenAI.Chat.Completions.ChatCompletionMessageToolCall & { type: 'function' } => tc.type === 'function')
+          .map((tc) => ({
+            role: 'tool' as const,
+            tool_call_id: tc.id,
+            content: tc.function.name === 'extract_filters'
+              ? JSON.stringify({
+                  total: eventsResult.total,
+                  events: eventsResult.events.map((e) => ({
+                    id: e.id,
+                    title: e.title,
+                    tagline: e.tagline,
+                    venue_name: e.venue_name,
+                    next_start_at: e.next_start_at,
+                    is_free: e.is_free,
+                    price_summary: e.price_summary,
+                    age_label: e.age_label,
+                    rating_avg: e.rating_avg,
+                  })),
+                })
+              : JSON.stringify({ result: 'ok' }),
+          }));
 
       // Call OpenAI again with all tool results to get a natural language response
       const followUpMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
