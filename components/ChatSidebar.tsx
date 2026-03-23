@@ -164,13 +164,15 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
       }
 
       setParsedChildren(children);
-      setMessages((prev) => [...prev, {
-        role: 'assistant',
-        content: 'Here is what I understood:',
-        childSummary: children,
-        quickReplies: ['Confirm', 'Let me rephrase'],
-      }]);
-      setOnboardingStep('q1_confirm');
+      // Skip confirm — go straight to Q2 interests
+      partialProfileRef.current.children = children;
+      applyProfileFilters(partialProfileRef.current);
+      setCurrentChildIndex(0);
+      setSelectedItems(new Set());
+      setOnboardingStep('q2_interests');
+      const child = children[0];
+      const label = child.name || `your ${child.age}-year-old`;
+      setMessages((prev) => [...prev, { role: 'assistant', content: `Got it! What does ${label} enjoy?` }]);
     } catch {
       setMessages((prev) => [...prev, {
         role: 'assistant',
@@ -239,16 +241,11 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
         const label = child.name || `your ${child.age}-year-old`;
         setMessages((prev) => [...prev, { role: 'assistant', content: `What does ${label} enjoy?` }]);
       } else {
-        // All done — show summary
+        // All children done — skip summary, go straight to Q3
         partialProfileRef.current.children = updatedChildren;
         applyProfileFilters(partialProfileRef.current);
-        setMessages((prev) => [...prev, {
-          role: 'assistant',
-          content: 'Great! Here are the interests I noted:',
-          interestSummary: updatedChildren,
-          quickReplies: ['Continue'],
-        }]);
-        setOnboardingStep('q2_summary');
+        setOnboardingStep('q3_neighborhoods');
+        setMessages((prev) => [...prev, { role: 'assistant', content: 'Which neighborhoods are you interested in?' }]);
       }
     } else if (onboardingStep === 'q3_neighborhoods') {
       partialProfileRef.current.neighborhoods = selected;
@@ -296,29 +293,7 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
 
   // Handle quick reply
   const handleQuickReply = useCallback((reply: string) => {
-    if (onboardingStep === 'q1_confirm') {
-      setMessages((prev) => [...prev, { role: 'user', content: reply }]);
-      if (reply === 'Confirm') {
-        partialProfileRef.current.children = parsedChildren;
-        applyProfileFilters(partialProfileRef.current);
-        setCurrentChildIndex(0);
-        setSelectedItems(new Set());
-        setOnboardingStep('q2_interests');
-        const child = parsedChildren[0];
-        const label = child.name || `your ${child.age}-year-old`;
-        setMessages((prev) => [...prev, { role: 'assistant', content: `What does ${label} enjoy?` }]);
-      } else {
-        // Let me rephrase
-        setOnboardingStep('q1_children');
-        setParsedChildren([]);
-        setMessages((prev) => [...prev, { role: 'assistant', content: 'No problem! Describe your children again.' }]);
-      }
-    } else if (onboardingStep === 'q2_summary') {
-      setMessages((prev) => [...prev, { role: 'user', content: reply }]);
-      setSelectedItems(new Set());
-      setOnboardingStep('q3_neighborhoods');
-      setMessages((prev) => [...prev, { role: 'assistant', content: 'Which neighborhoods are you interested in?' }]);
-    } else if (onboardingStep === 'q4_budget') {
+    if (onboardingStep === 'q4_budget') {
       partialProfileRef.current.budget = reply;
       applyProfileFilters(partialProfileRef.current);
       setMessages((prev) => [
