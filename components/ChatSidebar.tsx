@@ -69,6 +69,8 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
       setProfile(stored);
       setOnboardingDone(true);
       setOnboardingStep('done');
+      // Re-apply saved profile filters
+      applyProfileFilters(stored);
       setMessages([
         {
           role: 'assistant',
@@ -85,6 +87,7 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
         },
       ]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-scroll to bottom

@@ -236,13 +236,23 @@ function MapViewInner({
       markersRef.current.set(event.id, marker);
     });
 
-    // Fit bounds if we have markers and haven't set initial bounds
+    // Fit bounds to NYC-area events only, or default to NYC center
     if (eventsWithCoords.length > 0 && !initialBoundsSetRef.current) {
-      const bounds = L.latLngBounds(
-        eventsWithCoords.map((e) => [e.lat!, e.lon!] as L.LatLngTuple)
+      // Filter to NYC area events only (roughly within 50km of Manhattan)
+      const nycEvents = eventsWithCoords.filter(
+        (e) => e.lat! > 40.4 && e.lat! < 41.0 && e.lon! > -74.3 && e.lon! < -73.6
       );
-      programmaticMoveRef.current = true;
-      map.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 });
+      if (nycEvents.length > 0) {
+        const bounds = L.latLngBounds(
+          nycEvents.map((e) => [e.lat!, e.lon!] as L.LatLngTuple)
+        );
+        programmaticMoveRef.current = true;
+        map.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 });
+      } else {
+        // Fallback: zoom to NYC center
+        programmaticMoveRef.current = true;
+        map.setView([40.7128, -74.006], 12);
+      }
       initialBoundsSetRef.current = true;
     }
   }, [events, onHoverItem, onSelectItem, onViewDetails, selectedItemId]);
