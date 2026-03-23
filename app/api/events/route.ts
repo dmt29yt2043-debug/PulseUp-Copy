@@ -56,6 +56,9 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     if (search) filters.search = search;
 
+    const neighborhoods = searchParams.get('neighborhoods');
+    if (neighborhoods) filters.neighborhoods = neighborhoods.split(',').map((s) => s.trim());
+
     const result = getEvents(filters);
 
     return Response.json({

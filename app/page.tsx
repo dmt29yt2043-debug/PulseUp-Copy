@@ -97,6 +97,9 @@ export default function Home() {
         params.set('lon', String(filters.lon));
         params.set('distance', String(filters.distance));
       }
+      if (filters.neighborhoods && filters.neighborhoods.length > 0) {
+        params.set('neighborhoods', filters.neighborhoods.join(','));
+      }
 
       const res = await fetch(`/api/events?${params.toString()}`);
       const data = await res.json();

@@ -78,6 +78,14 @@ export interface FilterState {
   lon?: number;
   distance?: number;
   search?: string;
+  neighborhoods?: string[];
+}
+
+export interface ChildProfile {
+  age: number;
+  gender: 'boy' | 'girl' | 'unknown';
+  name?: string;
+  interests: string[];
 }
 
 export interface ChatMessage {
@@ -86,11 +94,15 @@ export interface ChatMessage {
   events?: Event[];
   filters?: FilterState;
   quickReplies?: string[];
+  childSummary?: ChildProfile[];
+  interestSummary?: ChildProfile[];
+  showSkip?: boolean;
+  showDone?: boolean;
 }
 
 export interface UserProfile {
-  attendees: string;
-  childAges: string;
-  interests: string;
+  children: ChildProfile[];
+  neighborhoods: string[];
   budget: string;
+  specialNeeds?: string;
 }

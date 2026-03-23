@@ -92,6 +92,44 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+
+    // Mode: parse_children — lightweight LLM call to extract children from free text
+    if (body.mode === 'parse_children') {
+      const text = body.message as string;
+      if (!text) return Response.json({ error: 'Message is required' }, { status: 400 });
+
+      const parseResult = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        response_format: { type: 'json_object' },
+        messages: [
+          {
+            role: 'system',
+            content: `Extract children information from the user's text. Return a JSON object with a "children" array.
+Detect gender from keywords: daughter/son/girl/boy (also Russian: дочь/сын/девочка/мальчик).
+Each child object: { "age": number, "gender": "boy"|"girl"|"unknown", "name": string|null }
+If age is unclear, make a reasonable guess. If gender is unclear, use "unknown".
+Examples:
+- "daughter 6 and son 3" → {"children": [{"age": 6, "gender": "girl", "name": null}, {"age": 3, "gender": "boy", "name": null}]}
+- "дочка Маша 5 лет" → {"children": [{"age": 5, "gender": "girl", "name": "Маша"}]}
+- "2 kids ages 4 and 7" → {"children": [{"age": 4, "gender": "unknown", "name": null}, {"age": 7, "gender": "unknown", "name": null}]}
+Return ONLY the JSON object.`,
+          },
+          { role: 'user', content: text },
+        ],
+      });
+
+      const parsed = JSON.parse(parseResult.choices[0].message.content || '{"children": []}');
+      // Validate and sanitize
+      const children = (parsed.children || []).map((c: Record<string, unknown>) => ({
+        age: Math.max(0, Math.min(18, Number(c.age) || 5)),
+        gender: ['boy', 'girl', 'unknown'].includes(c.gender as string) ? c.gender : 'unknown',
+        name: c.name || null,
+        interests: [],
+      }));
+
+      return Response.json({ children });
+    }
+
     const { message, filters: existingFilters, history, profile } = body as {
       message: string;
       filters?: FilterState;
@@ -106,7 +144,22 @@ export async function POST(request: Request) {
     // Build conversation messages
     let systemContent = SYSTEM_PROMPT;
     if (profile) {
-      systemContent += `\n\nUser profile:\n- Attendees: ${profile.attendees}\n- Child ages: ${profile.childAges || 'N/A'}\n- Interests: ${profile.interests}\n- Budget preference: ${profile.budget}\n\nUse this profile to personalize event recommendations.`;
+      // Support both old and new profile shapes
+      if ('children' in profile && Array.isArray(profile.children)) {
+        const childrenDesc = profile.children.map((c) => {
+          const genderEmoji = c.gender === 'girl' ? '👧' : c.gender === 'boy' ? '👦' : '🧒';
+          const name = c.name ? ` ${c.name}` : '';
+          const interests = c.interests.length > 0 ? ` — interests: ${c.interests.join(', ')}` : '';
+          return `${genderEmoji}${name} ${c.age}yo${interests}`;
+        }).join('\n');
+        const nbDesc = profile.neighborhoods?.length ? profile.neighborhoods.join(', ') : 'Anywhere in NYC';
+        const specialDesc = profile.specialNeeds ? `\n- Special needs: ${profile.specialNeeds}` : '';
+        systemContent += `\n\nUser profile:\n- Children:\n${childrenDesc}\n- Neighborhoods: ${nbDesc}\n- Budget: ${profile.budget}${specialDesc}\n\nUse this profile to personalize event recommendations.`;
+      } else {
+        // Legacy profile shape
+        const legacy = profile as unknown as { attendees?: string; childAges?: string; interests?: string; budget?: string };
+        systemContent += `\n\nUser profile:\n- Attendees: ${legacy.attendees}\n- Child ages: ${legacy.childAges || 'N/A'}\n- Interests: ${legacy.interests}\n- Budget: ${legacy.budget}\n\nUse this profile to personalize event recommendations.`;
+      }
     }
 
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [

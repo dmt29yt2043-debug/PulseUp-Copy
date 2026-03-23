@@ -290,6 +290,68 @@ body {
   50% { opacity: 1; transform: scale(1.2); }
 }
 
+/* ===== Multi-select onboarding buttons ===== */
+.multi-select-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 6px 12px !important;
+  border-radius: 20px !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  border: 1.5px solid #e0e0e0 !important;
+  background: white !important;
+  color: #555 !important;
+}
+.multi-select-btn:hover {
+  border-color: #e91e63 !important;
+  color: #e91e63 !important;
+}
+.multi-select-btn.selected {
+  background: #e91e63 !important;
+  border-color: #e91e63 !important;
+  color: white !important;
+}
+.onboarding-done-btn {
+  display: inline-block !important;
+  padding: 8px 24px !important;
+  border-radius: 20px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  border: none !important;
+  background: #e91e63 !important;
+  color: white !important;
+  transition: all 0.15s ease !important;
+}
+.onboarding-done-btn:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+}
+.onboarding-done-btn:not(:disabled):hover {
+  background: #c2185b !important;
+}
+.skip-btn {
+  display: inline-block !important;
+  padding: 6px 16px !important;
+  border-radius: 20px !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  border: 1.5px solid #ccc !important;
+  background: white !important;
+  color: #888 !important;
+  transition: all 0.15s ease !important;
+}
+.skip-btn:hover {
+  border-color: #999 !important;
+  color: #555 !important;
+}
+.child-summary-card {
+  background: #fce4ec !important;
+  border-radius: 12px !important;
+  padding: 8px 12px !important;
+}
+
 /* ===== Leaflet overrides ===== */
 .leaflet-container {
   width: 100%;

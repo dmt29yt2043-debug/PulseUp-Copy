@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { ChatMessage, Event } from '@/lib/types';
+import type { ChatMessage, ChildProfile, Event } from '@/lib/types';
 
 const THINKING_STEPS = [
   'Understanding your request…',
@@ -48,14 +48,75 @@ function ThinkingIndicator() {
   );
 }
 
+function genderEmoji(gender: string): string {
+  return gender === 'girl' ? '👧' : gender === 'boy' ? '👦' : '🧒';
+}
+
+const INTEREST_EMOJIS: Record<string, string> = {
+  'Active': '⚽', 'Creative': '🎨', 'Educational': '📚', 'Shows': '🎭',
+  'Outdoor': '🌳', 'Fun & Play': '🎮', 'Adventure': '🏔️', 'Books': '📖', 'Social': '👫',
+};
+
+function ChildSummaryBlock({ children }: { children: ChildProfile[] }) {
+  return (
+    <div className="mt-2 child-summary-card">
+      {children.map((child, i) => (
+        <div key={i} className="flex items-center gap-2 py-1">
+          <span className="text-lg">{genderEmoji(child.gender)}</span>
+          <span className="text-sm font-medium">
+            {child.name || `Child ${i + 1}`}, {child.age}yo
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function InterestSummaryBlock({ children }: { children: ChildProfile[] }) {
+  return (
+    <div className="mt-2 child-summary-card">
+      {children.map((child, i) => (
+        <div key={i} className="py-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="text-lg">{genderEmoji(child.gender)}</span>
+            <span className="text-xs font-semibold text-gray-700">
+              {child.name || `${child.age}yo`}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1 mt-1 ml-7">
+            {child.interests.map((int) => (
+              <span key={int} className="text-[11px] bg-pink-50 text-pink-700 px-1.5 py-0.5 rounded-full">
+                {INTEREST_EMOJIS[int] || ''} {int}
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export interface MultiSelectState {
+  options: string[];
+  selected: Set<string>;
+  onToggle: (item: string) => void;
+  onDone: () => void;
+  doneLabel?: string;
+}
+
 interface ChatMessagesProps {
   messages: ChatMessage[];
   isLoading?: boolean;
   onEventClick: (event: Event) => void;
   onQuickReply?: (reply: string) => void;
+  multiSelectState?: MultiSelectState | null;
+  onSkip?: () => void;
 }
 
-export default function ChatMessages({ messages, isLoading, onEventClick, onQuickReply }: ChatMessagesProps) {
+export default function ChatMessages({
+  messages, isLoading, onEventClick, onQuickReply,
+  multiSelectState, onSkip,
+}: ChatMessagesProps) {
   if (messages.length === 0 && !isLoading) return null;
 
   return (
@@ -64,16 +125,31 @@ export default function ChatMessages({ messages, isLoading, onEventClick, onQuic
         const isLast = i === messages.length - 1;
         return (
           <div key={i}>
-            <div
-              className={`inline-block max-w-[85%] px-3 py-2 rounded-xl text-sm leading-relaxed whitespace-pre-line ${
-                msg.role === 'user'
-                  ? 'ml-auto bg-[#e91e63] text-white float-right'
-                  : 'bg-gray-100 text-gray-800'
-              }`}
-            >
-              {msg.content}
-            </div>
-            <div className="clear-both" />
+            {/* Message bubble */}
+            {msg.content && (
+              <>
+                <div
+                  className={`inline-block max-w-[85%] px-3 py-2 rounded-xl text-sm leading-relaxed whitespace-pre-line ${
+                    msg.role === 'user'
+                      ? 'ml-auto bg-[#e91e63] text-white float-right'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
+                  {msg.content}
+                </div>
+                <div className="clear-both" />
+              </>
+            )}
+
+            {/* Child summary block */}
+            {msg.childSummary && msg.childSummary.length > 0 && (
+              <ChildSummaryBlock children={msg.childSummary} />
+            )}
+
+            {/* Interest summary block */}
+            {msg.interestSummary && msg.interestSummary.length > 0 && (
+              <InterestSummaryBlock children={msg.interestSummary} />
+            )}
 
             {/* Inline event cards from assistant */}
             {msg.role === 'assistant' && msg.events && msg.events.length > 0 && (
@@ -86,18 +162,10 @@ export default function ChatMessages({ messages, isLoading, onEventClick, onQuic
                     style={{ width: 160 }}
                   >
                     {event.image_url && (
-                      <img
-                        src={event.image_url}
-                        alt=""
-                        className="w-full h-16 object-cover rounded mb-1"
-                      />
+                      <img src={event.image_url} alt="" className="w-full h-16 object-cover rounded mb-1" />
                     )}
-                    <p className="text-xs font-semibold text-gray-900 line-clamp-2">
-                      {event.title}
-                    </p>
-                    <p className="text-[10px] text-gray-500 mt-0.5">
-                      {event.is_free ? 'Free' : event.price_summary}
-                    </p>
+                    <p className="text-xs font-semibold text-gray-900 line-clamp-2">{event.title}</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">{event.is_free ? 'Free' : event.price_summary}</p>
                   </button>
                 ))}
               </div>
@@ -107,14 +175,45 @@ export default function ChatMessages({ messages, isLoading, onEventClick, onQuic
             {msg.role === 'assistant' && isLast && msg.quickReplies && msg.quickReplies.length > 0 && onQuickReply && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {msg.quickReplies.map((reply) => (
-                  <button
-                    key={reply}
-                    onClick={() => onQuickReply(reply)}
-                    className="quick-reply-pill"
-                  >
+                  <button key={reply} onClick={() => onQuickReply(reply)} className="quick-reply-pill">
                     {reply}
                   </button>
                 ))}
+              </div>
+            )}
+
+            {/* Multi-select buttons - only on last assistant message */}
+            {msg.role === 'assistant' && isLast && multiSelectState && (
+              <div className="mt-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {multiSelectState.options.map((opt) => {
+                    const isSelected = multiSelectState.selected.has(opt);
+                    return (
+                      <button
+                        key={opt}
+                        onClick={() => multiSelectState.onToggle(opt)}
+                        className={`multi-select-btn ${isSelected ? 'selected' : ''}`}
+                      >
+                        {isSelected && <span className="mr-1">✓</span>}
+                        {opt}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={multiSelectState.onDone}
+                  disabled={multiSelectState.selected.size === 0}
+                  className="onboarding-done-btn mt-2"
+                >
+                  {multiSelectState.doneLabel || 'Done'}
+                </button>
+              </div>
+            )}
+
+            {/* Skip button */}
+            {msg.role === 'assistant' && isLast && msg.showSkip && onSkip && (
+              <div className="mt-2">
+                <button onClick={onSkip} className="skip-btn">Skip</button>
               </div>
             )}
           </div>

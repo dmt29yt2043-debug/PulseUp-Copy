@@ -2,6 +2,16 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import type { Event, FilterState } from './types';
 
+const NEIGHBORHOOD_BOUNDS: Record<string, { latMin: number; latMax: number; lonMin: number; lonMax: number }> = {
+  'Upper Manhattan': { latMin: 40.80, latMax: 40.88, lonMin: -73.97, lonMax: -73.91 },
+  'Midtown': { latMin: 40.74, latMax: 40.80, lonMin: -74.01, lonMax: -73.95 },
+  'Lower Manhattan': { latMin: 40.70, latMax: 40.74, lonMin: -74.02, lonMax: -73.97 },
+  'Brooklyn': { latMin: 40.57, latMax: 40.74, lonMin: -74.04, lonMax: -73.83 },
+  'Queens': { latMin: 40.54, latMax: 40.80, lonMin: -73.96, lonMax: -73.70 },
+  'Bronx': { latMin: 40.80, latMax: 40.92, lonMin: -73.93, lonMax: -73.75 },
+  'Staten Island': { latMin: 40.49, latMax: 40.65, lonMin: -74.26, lonMax: -74.05 },
+};
+
 const DB_PATH = path.join(process.cwd(), 'data', 'events.db');
 
 let _db: Database.Database | null = null;
@@ -120,6 +130,24 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
   if (filters.search) {
     params.search = `%${filters.search}%`;
     conditions.push('(title LIKE @search OR description LIKE @search OR tagline LIKE @search OR tags LIKE @search)');
+  }
+
+  // Neighborhood bounding-box filter
+  if (filters.neighborhoods && filters.neighborhoods.length > 0 && !filters.neighborhoods.includes('Anywhere in NYC')) {
+    const nbConds: string[] = [];
+    filters.neighborhoods.forEach((nb, i) => {
+      const bounds = NEIGHBORHOOD_BOUNDS[nb];
+      if (bounds) {
+        params[`nb_latmin_${i}`] = bounds.latMin;
+        params[`nb_latmax_${i}`] = bounds.latMax;
+        params[`nb_lonmin_${i}`] = bounds.lonMin;
+        params[`nb_lonmax_${i}`] = bounds.lonMax;
+        nbConds.push(`(lat BETWEEN @nb_latmin_${i} AND @nb_latmax_${i} AND lon BETWEEN @nb_lonmin_${i} AND @nb_lonmax_${i})`);
+      }
+    });
+    if (nbConds.length > 0) {
+      conditions.push(`lat IS NOT NULL AND lon IS NOT NULL AND (${nbConds.join(' OR ')})`);
+    }
   }
 
   let distanceSelect = '';
