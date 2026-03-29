@@ -25,25 +25,25 @@ export default function WhenFilter({ dateFrom: initialFrom, dateTo: initialTo, o
   return (
     <div className="filter-dialog-backdrop" onClick={onClose}>
       <div className="filter-dialog" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold mb-4">When?</h3>
+        <h3 className="text-lg font-semibold mb-4 text-white">When?</h3>
 
         <div className="space-y-3 mb-6">
           <div>
-            <label className="block text-sm text-gray-600 mb-1">From</label>
+            <label className="block text-sm text-gray-400 mb-1">From</label>
             <input
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#e91e63]"
+              className="w-full px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg text-sm focus:outline-none focus:border-[#e91e63] bg-[#16143a] text-white"
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-600 mb-1">To</label>
+            <label className="block text-sm text-gray-400 mb-1">To</label>
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#e91e63]"
+              className="w-full px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg text-sm focus:outline-none focus:border-[#e91e63] bg-[#16143a] text-white"
             />
           </div>
         </div>
@@ -51,7 +51,7 @@ export default function WhenFilter({ dateFrom: initialFrom, dateTo: initialTo, o
         <div className="flex gap-3">
           <button
             onClick={handleClear}
-            className="flex-1 py-2 px-4 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="flex-1 py-2 px-4 rounded-lg border border-[rgba(255,255,255,0.15)] text-sm font-medium text-gray-400 hover:bg-[rgba(255,255,255,0.05)]"
           >
             Clear
           </button>

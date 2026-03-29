@@ -3,15 +3,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import type { Event, FilterState } from '@/lib/types';
-import TopBar from '@/components/TopBar';
-import FilterBar from '@/components/FilterBar';
 import EventDetail from '@/components/EventDetail';
 import ChatSidebar from '@/components/ChatSidebar';
 import WhatFilter from '@/components/FilterDialogs/WhatFilter';
 import WhenFilter from '@/components/FilterDialogs/WhenFilter';
 import BudgetFilter from '@/components/FilterDialogs/BudgetFilter';
 import WhoFilter from '@/components/FilterDialogs/WhoFilter';
-import ResultCard from '@/components/discovery/ResultCard';
+import EventCardV2 from '@/components/EventCardV2';
 import type { MapBounds } from '@/components/discovery/discovery-state';
 
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -22,6 +20,31 @@ interface Category {
 }
 
 const PAGE_SIZE = 30;
+
+function formatDateRange(filters: FilterState): string {
+  if (filters.dateFrom && filters.dateTo) {
+    const from = new Date(filters.dateFrom).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const to = new Date(filters.dateTo).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return `${from} - ${to}`;
+  }
+  if (filters.dateFrom) {
+    return `From ${new Date(filters.dateFrom).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  }
+  return 'Any date';
+}
+
+function formatWho(filters: FilterState): string {
+  if (filters.ageMax !== undefined && filters.ageMax !== null) {
+    return `Up to ${filters.ageMax}yo`;
+  }
+  return '1 Adult';
+}
+
+function formatBudget(filters: FilterState): string {
+  if (filters.isFree) return 'Free only';
+  if (filters.priceMax !== undefined) return `Up to $${filters.priceMax}`;
+  return 'Any budget';
+}
 
 export default function Home() {
   // Data state
@@ -37,8 +60,12 @@ export default function Home() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [openFilter, setOpenFilter] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'feed' | 'foryou'>('feed');
 
-  // Discovery state (inline instead of context for simpler wiring)
+  // Price range slider
+  const [priceSlider, setPriceSlider] = useState(850);
+
+  // Discovery state
   const [hoveredItemId, setHoveredItemId] = useState<number | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
@@ -136,6 +163,7 @@ export default function Home() {
   const handleFilterReset = useCallback(() => {
     setFilters({});
     setPage(1);
+    setPriceSlider(850);
   }, []);
 
   const handleFiltersFromChat = useCallback((newFilters: FilterState) => {
@@ -152,7 +180,6 @@ export default function Home() {
 
   const handleMapSelectItem = useCallback((id: number | null) => {
     setSelectedItemId(id);
-    // Scroll to card in results list
     if (id != null && resultsRef.current) {
       const cardEl = resultsRef.current.querySelector(`[data-event-id="${id}"]`);
       if (cardEl) {
@@ -235,31 +262,202 @@ export default function Home() {
     setOpenFilter(null);
   }, []);
 
+  // Price slider handler
+  const handlePriceSliderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value);
+    setPriceSlider(val);
+  }, []);
+
+  const handlePriceSliderCommit = useCallback(() => {
+    setFilters((prev) => ({
+      ...prev,
+      priceMax: priceSlider < 850 ? priceSlider : undefined,
+    }));
+    setPage(1);
+  }, [priceSlider]);
+
   const displayEvents = boundsFiltered ? filteredEvents : events;
 
+  const sliderPct = Math.round((priceSlider / 850) * 100);
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <TopBar />
-      <FilterBar
-        filters={filters}
-        onOpenFilter={(name) => setOpenFilter(name)}
-        onReset={handleFilterReset}
-      />
+    <div className="flex flex-col h-screen overflow-hidden">
+      {/* ===== Header ===== */}
+      <header className="v2-header">
+        {/* Logo */}
+        <div className="v2-header-logo">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <defs>
+              <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#e91e63" />
+                <stop offset="100%" stopColor="#ff6090" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+              fill="url(#heartGrad)"
+            />
+          </svg>
+          <span>Pulse</span>
+        </div>
 
-      {/* Main split layout: chat | results | map */}
+        {/* Center: title + tabs */}
+        <div className="flex items-center gap-4">
+          <div className="v2-header-center">
+            <span className="v2-header-title">Events for you</span>
+            <span className="v2-header-subtitle">Curated NYC experiences</span>
+          </div>
+          <div className="v2-header-tabs">
+            <button
+              className={`v2-header-tab ${activeTab === 'feed' ? 'active' : ''}`}
+              onClick={() => setActiveTab('feed')}
+            >
+              Feed ({total})
+            </button>
+            <button
+              className={`v2-header-tab ${activeTab === 'foryou' ? 'active' : ''}`}
+              onClick={() => setActiveTab('foryou')}
+            >
+              For you
+            </button>
+          </div>
+        </div>
+
+        {/* Right icons */}
+        <div className="v2-header-right">
+          <button className="v2-header-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          </button>
+          <button className="v2-header-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </button>
+          <div className="v2-header-avatar">M</div>
+        </div>
+      </header>
+
+      {/* ===== Main 3-column layout ===== */}
       <div className="discovery-layout">
-        {/* Chat Sidebar */}
-        <ChatSidebar
-          filters={filters}
-          onFiltersChange={handleFiltersFromChat}
-          onEventClick={handleEventClick}
-        />
+        {/* LEFT SIDEBAR: filters + chat */}
+        <aside className="v2-sidebar">
+          {/* Filter section */}
+          <div className="v2-sidebar-filters">
+            <div className="v2-sidebar-filters-label">Refine Search</div>
 
-        {/* Results column */}
+            {/* Price Range Slider */}
+            <div className="v2-price-range">
+              <div className="v2-price-range-header">
+                <span className="v2-price-range-label">Price Range</span>
+                <span className="v2-price-range-value">
+                  $0 &ndash; ${priceSlider >= 850 ? '850+' : priceSlider}
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="850"
+                value={priceSlider}
+                onChange={handlePriceSliderChange}
+                onMouseUp={handlePriceSliderCommit}
+                onTouchEnd={handlePriceSliderCommit}
+                className="v2-price-slider"
+                style={{ '--slider-pct': `${sliderPct}%` } as React.CSSProperties}
+              />
+            </div>
+
+            {/* What filter */}
+            <div className="v2-filter-item" onClick={() => setOpenFilter('what')}>
+              <div className="v2-filter-item-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                </svg>
+              </div>
+              <span className="v2-filter-item-label">What</span>
+              <span className="v2-filter-item-value">
+                {filters.categories && filters.categories.length > 0
+                  ? `${filters.categories.length} selected`
+                  : 'Activities'}
+              </span>
+              <span className="v2-filter-item-chevron">&rsaquo;</span>
+            </div>
+
+            {/* Date filter */}
+            <div className="v2-filter-item" onClick={() => setOpenFilter('when')}>
+              <div className="v2-filter-item-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+              </div>
+              <span className="v2-filter-item-label">Date</span>
+              <span className="v2-filter-item-value">{formatDateRange(filters)}</span>
+              <span className="v2-filter-item-chevron">&rsaquo;</span>
+            </div>
+
+            {/* Who filter */}
+            <div className="v2-filter-item" onClick={() => setOpenFilter('who')}>
+              <div className="v2-filter-item-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <span className="v2-filter-item-label">Who</span>
+              <span className="v2-filter-item-value">{formatWho(filters)}</span>
+              <span className="v2-filter-item-chevron">&rsaquo;</span>
+            </div>
+
+            {/* Reset button */}
+            {(filters.categories || filters.priceMax !== undefined || filters.dateFrom || filters.ageMax !== undefined || filters.isFree) && (
+              <button
+                onClick={handleFilterReset}
+                className="mt-2 w-full text-center text-xs py-1.5 rounded-lg transition-colors"
+                style={{ color: 'var(--primary)', background: 'rgba(233,30,99,0.1)' }}
+              >
+                Reset all filters
+              </button>
+            )}
+          </div>
+
+          <div className="v2-sidebar-divider" />
+
+          {/* Chat section */}
+          <div className="v2-chat-section">
+            <div className="v2-chat-header">
+              <div className="v2-chat-header-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+              </div>
+              <div className="v2-chat-header-text">
+                <span className="v2-chat-header-title">Pulse Assistant</span>
+                <span className="v2-chat-header-subtitle">Exploring New York City</span>
+              </div>
+            </div>
+
+            {/* ChatSidebar (reused, but rendered inline in the sidebar) */}
+            <ChatSidebar
+              filters={filters}
+              onFiltersChange={handleFiltersFromChat}
+              onEventClick={handleEventClick}
+            />
+          </div>
+        </aside>
+
+        {/* CENTER: results grid */}
         <div className="results-column" ref={resultsRef}>
           {loading ? (
             <div className="results-loading">
-              {Array.from({ length: 6 }).map((_, i) => (
+              {Array.from({ length: 9 }).map((_, i) => (
                 <div key={i} className="result-skeleton">
                   <div className="result-skeleton-img" />
                   <div className="result-skeleton-text">
@@ -272,13 +470,13 @@ export default function Home() {
             </div>
           ) : displayEvents.length === 0 ? (
             <div className="results-empty">
-              <p className="text-gray-500 text-base">No events found</p>
-              <p className="text-gray-400 text-sm mt-1">Try adjusting your filters</p>
+              <p className="text-base">No events found</p>
+              <p className="text-sm mt-1">Try adjusting your filters</p>
             </div>
           ) : (
             <>
               <div className="results-header">
-                <span className="text-xs text-gray-500">
+                <span className="text-xs">
                   {boundsFiltered
                     ? `${displayEvents.length} events in this area`
                     : `${total} events`}
@@ -286,7 +484,7 @@ export default function Home() {
               </div>
               <div className="results-list">
                 {displayEvents.map((event) => (
-                  <ResultCard
+                  <EventCardV2
                     key={event.id}
                     event={event}
                     isHovered={hoveredItemId === event.id}
@@ -301,7 +499,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Map column */}
+        {/* RIGHT: map */}
         <div className="map-column">
           <MapView
             events={displayEvents}

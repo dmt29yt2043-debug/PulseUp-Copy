@@ -47,13 +47,13 @@ function DeriskSection({ event }: { event: Event }) {
   if (fields.length === 0) return null;
 
   return (
-    <div className="border-t border-gray-100 pt-4">
+    <div className="border-t border-[rgba(255,255,255,0.08)] pt-4">
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex items-center justify-between w-full text-left"
       >
-        <span className="font-semibold text-sm">Good to Know</span>
-        <span className="text-gray-400 text-lg">{expanded ? '\u2212' : '+'}</span>
+        <span className="font-semibold text-sm text-white">Good to Know</span>
+        <span className="text-gray-500 text-lg">{expanded ? '\u2212' : '+'}</span>
       </button>
       {expanded && (
         <div className="mt-3 space-y-3">
@@ -62,7 +62,7 @@ function DeriskSection({ event }: { event: Event }) {
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 {f.label}
               </p>
-              <p className="text-sm text-gray-700 mt-0.5">{f.value}</p>
+              <p className="text-sm text-gray-300 mt-0.5">{f.value}</p>
             </div>
           ))}
         </div>
@@ -76,28 +76,28 @@ function ReviewsSection({ event }: { event: Event }) {
   if (!event.reviews || event.reviews.length === 0) return null;
 
   return (
-    <div className="border-t border-gray-100 pt-4">
+    <div className="border-t border-[rgba(255,255,255,0.08)] pt-4">
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex items-center justify-between w-full text-left"
       >
-        <span className="font-semibold text-sm">
+        <span className="font-semibold text-sm text-white">
           Reviews ({event.reviews.length})
           {event.rating_avg > 0 && (
-            <span className="ml-2 text-yellow-500">
+            <span className="ml-2 text-yellow-400">
               {'*'.repeat(Math.round(event.rating_avg))} {event.rating_avg.toFixed(1)}
             </span>
           )}
         </span>
-        <span className="text-gray-400 text-lg">{expanded ? '\u2212' : '+'}</span>
+        <span className="text-gray-500 text-lg">{expanded ? '\u2212' : '+'}</span>
       </button>
       {expanded && (
         <div className="mt-3 space-y-3">
           {event.reviews.map((review, i) => (
-            <div key={i} className="bg-gray-50 rounded-lg p-3">
-              <p className="text-sm text-gray-700">{review.text}</p>
+            <div key={i} className="bg-[#1e1b4b] rounded-lg p-3">
+              <p className="text-sm text-gray-300">{review.text}</p>
               {review.source && (
-                <p className="text-xs text-gray-400 mt-1">{review.source}</p>
+                <p className="text-xs text-gray-500 mt-1">{review.source}</p>
               )}
             </div>
           ))}
@@ -123,14 +123,14 @@ export default function EventDetail({ event, open, onClose }: EventDetailProps) 
         {/* Close button */}
         <button
           onClick={onClose}
-          className="sticky top-3 left-auto ml-auto mr-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-md text-gray-600 hover:text-gray-900"
+          className="sticky top-3 left-auto ml-auto mr-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-[#1e1b4b] shadow-md text-gray-400 hover:text-white"
           style={{ float: 'right' }}
         >
           &#10005;
         </button>
 
         {/* Image */}
-        <div className="relative aspect-[16/9] bg-gray-100">
+        <div className="relative aspect-[16/9] bg-[#1e1b4b]">
           {event.image_url && !imgError ? (
             <img
               src={event.image_url}
@@ -139,7 +139,7 @@ export default function EventDetail({ event, open, onClose }: EventDetailProps) 
               onError={() => setImgError(true)}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-100 to-pink-50">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1e1b4b] to-[#2a2563]">
               <span className="text-6xl">&#127915;</span>
             </div>
           )}
@@ -148,10 +148,10 @@ export default function EventDetail({ event, open, onClose }: EventDetailProps) 
         <div className="p-5 space-y-4">
           {/* Title and heart */}
           <div className="flex items-start justify-between gap-2">
-            <h2 className="text-xl font-bold text-gray-900 leading-snug">{event.title}</h2>
+            <h2 className="text-xl font-bold text-white leading-snug">{event.title}</h2>
             <button
               onClick={() => setLiked(!liked)}
-              className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 hover:border-pink-300 transition-colors"
+              className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full border border-[rgba(255,255,255,0.15)] hover:border-pink-400 transition-colors"
             >
               <span style={{ color: liked ? '#e91e63' : '#9ca3af', fontSize: 18 }}>
                 {liked ? '\u2764' : '\u2661'}
@@ -161,43 +161,43 @@ export default function EventDetail({ event, open, onClose }: EventDetailProps) 
 
           {/* Tagline */}
           {event.tagline && (
-            <p className="text-sm text-gray-600 italic">{event.tagline}</p>
+            <p className="text-sm text-gray-400 italic">{event.tagline}</p>
           )}
 
           {/* Metadata */}
           <div className="space-y-2 text-sm">
             {event.next_start_at && (
               <div className="flex items-start gap-2">
-                <span className="text-gray-400 w-5 text-center">&#128197;</span>
-                <span className="text-gray-700">{formatDate(event.next_start_at)}</span>
+                <span className="text-gray-500 w-5 text-center">&#128197;</span>
+                <span className="text-gray-300">{formatDate(event.next_start_at)}</span>
               </div>
             )}
             {event.venue_name && (
               <div className="flex items-start gap-2">
-                <span className="text-gray-400 w-5 text-center">&#128205;</span>
-                <span className="text-gray-700">{event.venue_name}</span>
+                <span className="text-gray-500 w-5 text-center">&#128205;</span>
+                <span className="text-gray-300">{event.venue_name}</span>
               </div>
             )}
             {event.address && (
               <div className="flex items-start gap-2">
-                <span className="text-gray-400 w-5 text-center">&#127968;</span>
-                <span className="text-gray-700">{event.address}</span>
+                <span className="text-gray-500 w-5 text-center">&#127968;</span>
+                <span className="text-gray-300">{event.address}</span>
               </div>
             )}
             {event.subway && (
               <div className="flex items-start gap-2">
-                <span className="text-gray-400 w-5 text-center">&#128647;</span>
-                <span className="text-gray-700">{event.subway}</span>
+                <span className="text-gray-500 w-5 text-center">&#128647;</span>
+                <span className="text-gray-300">{event.subway}</span>
               </div>
             )}
             {event.categories && event.categories.length > 0 && (
               <div className="flex items-start gap-2">
-                <span className="text-gray-400 w-5 text-center">&#127991;</span>
+                <span className="text-gray-500 w-5 text-center">&#127991;</span>
                 <div className="flex flex-wrap gap-1">
                   {event.categories.map((cat) => (
                     <span
                       key={cat}
-                      className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
+                      className="px-2 py-0.5 bg-[rgba(255,255,255,0.06)] text-gray-400 text-xs rounded"
                     >
                       {cat}
                     </span>
@@ -207,15 +207,15 @@ export default function EventDetail({ event, open, onClose }: EventDetailProps) 
             )}
             {event.age_label && (
               <div className="flex items-start gap-2">
-                <span className="text-gray-400 w-5 text-center">&#128118;</span>
-                <span className="text-gray-700">{event.age_label}</span>
+                <span className="text-gray-500 w-5 text-center">&#128118;</span>
+                <span className="text-gray-300">{event.age_label}</span>
               </div>
             )}
             <div className="flex items-start gap-2">
-              <span className="text-gray-400 w-5 text-center">&#128176;</span>
+              <span className="text-gray-500 w-5 text-center">&#128176;</span>
               <span
                 className="font-semibold"
-                style={{ color: event.is_free ? '#22c55e' : '#374151' }}
+                style={{ color: event.is_free ? '#22c55e' : 'white' }}
               >
                 {event.is_free
                   ? 'Free'
@@ -226,8 +226,8 @@ export default function EventDetail({ event, open, onClose }: EventDetailProps) 
 
           {/* Description */}
           {event.description && (
-            <div className="border-t border-gray-100 pt-4">
-              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+            <div className="border-t border-[rgba(255,255,255,0.08)] pt-4">
+              <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
                 {event.description}
               </p>
             </div>

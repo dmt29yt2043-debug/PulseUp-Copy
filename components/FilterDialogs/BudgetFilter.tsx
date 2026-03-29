@@ -38,30 +38,30 @@ export default function BudgetFilter({
   return (
     <div className="filter-dialog-backdrop" onClick={onClose}>
       <div className="filter-dialog" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold mb-4">Budget</h3>
+        <h3 className="text-lg font-semibold mb-4 text-white">Budget</h3>
 
         <div className="space-y-3 mb-4">
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="block text-sm text-gray-600 mb-1">Min ($)</label>
+              <label className="block text-sm text-gray-400 mb-1">Min ($)</label>
               <input
                 type="number"
                 value={priceMin}
                 onChange={(e) => setPriceMin(e.target.value)}
                 placeholder="0"
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#e91e63]"
+                className="w-full px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg text-sm focus:outline-none focus:border-[#e91e63] bg-[#16143a] text-white placeholder-gray-500"
               />
             </div>
             <div className="flex-1">
-              <label className="block text-sm text-gray-600 mb-1">Max ($)</label>
+              <label className="block text-sm text-gray-400 mb-1">Max ($)</label>
               <input
                 type="number"
                 value={priceMax}
                 onChange={(e) => setPriceMax(e.target.value)}
                 placeholder="Any"
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#e91e63]"
+                className="w-full px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg text-sm focus:outline-none focus:border-[#e91e63] bg-[#16143a] text-white placeholder-gray-500"
               />
             </div>
           </div>
@@ -73,14 +73,14 @@ export default function BudgetFilter({
               onChange={(e) => setIsFree(e.target.checked)}
               className="w-4 h-4 accent-[#e91e63]"
             />
-            <span className="text-sm text-gray-700">Free events only</span>
+            <span className="text-sm text-gray-300">Free events only</span>
           </label>
         </div>
 
         <div className="flex gap-3">
           <button
             onClick={handleClear}
-            className="flex-1 py-2 px-4 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="flex-1 py-2 px-4 rounded-lg border border-[rgba(255,255,255,0.15)] text-sm font-medium text-gray-400 hover:bg-[rgba(255,255,255,0.05)]"
           >
             Clear
           </button>

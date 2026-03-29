@@ -21,7 +21,7 @@ export default function RootLayout({
           crossOrigin=""
         />
       </head>
-      <body className="min-h-screen flex flex-col bg-[#f5f5f5]">
+      <body className="min-h-screen flex flex-col" style={{ background: '#0f0d2e', color: '#ffffff' }}>
         {children}
       </body>
     </html>

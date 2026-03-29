@@ -39,7 +39,7 @@ const INTEREST_TO_CATEGORIES: Record<string, string[]> = {
 };
 
 function genderEmoji(gender: string): string {
-  return gender === 'girl' ? '👧' : gender === 'boy' ? '👦' : '🧒';
+  return gender === 'girl' ? '\uD83D\uDC67' : gender === 'boy' ? '\uD83D\uDC66' : '\uD83E\uDDD2';
 }
 
 function getStoredProfile(): UserProfile | null {
@@ -48,7 +48,6 @@ function getStoredProfile(): UserProfile | null {
     const stored = localStorage.getItem('pulseup_profile');
     if (!stored) return null;
     const parsed = JSON.parse(stored);
-    // Migration: old profile shape has 'attendees', new has 'children'
     if ('attendees' in parsed && !('children' in parsed)) {
       localStorage.removeItem('pulseup_profile');
       return null;
@@ -89,10 +88,8 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
     const newFilters: FilterState = {};
 
     if (p.children && p.children.length > 0) {
-      // ageMax = max age among children
       newFilters.ageMax = Math.max(...p.children.map((c) => c.age));
 
-      // Collect all interests → categories
       const allInterests = new Set<string>();
       p.children.forEach((c) => c.interests.forEach((i) => allInterests.add(i)));
       if (allInterests.size > 0) {
@@ -129,7 +126,7 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
       applyProfileFilters(stored);
       setMessages([{ role: 'assistant', content: 'Welcome back! I remember your preferences. Ask me anything about events!' }]);
     } else {
-      setMessages([{ role: 'assistant', content: "Hi! I'm your event assistant. Tell me about your children — their ages and how many. For example: \"daughter 6 and son 3\"" }]);
+      setMessages([{ role: 'assistant', content: "Hi! I'm your event assistant. Tell me about your children \u2014 their ages and how many. For example: \"daughter 6 and son 3\"" }]);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -164,7 +161,6 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
       }
 
       setParsedChildren(children);
-      // Skip confirm — go straight to Q2 interests
       partialProfileRef.current.children = children;
       applyProfileFilters(partialProfileRef.current);
       setCurrentChildIndex(0);
@@ -176,7 +172,7 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
     } catch {
       setMessages((prev) => [...prev, {
         role: 'assistant',
-        content: 'Sorry, something went wrong. Please try again — describe your children.',
+        content: 'Sorry, something went wrong. Please try again \u2014 describe your children.',
       }]);
     } finally {
       setParsingChildren(false);
@@ -195,14 +191,13 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
     setSelectedItems(new Set());
     partialProfileRef.current = {};
     onFiltersChange({});
-    setMessages([{ role: 'assistant', content: "Hi! I'm your event assistant. Tell me about your children — their ages and how many. For example: \"daughter 6 and son 3\"" }]);
+    setMessages([{ role: 'assistant', content: "Hi! I'm your event assistant. Tell me about your children \u2014 their ages and how many. For example: \"daughter 6 and son 3\"" }]);
   }, [onFiltersChange]);
 
   // Handle multi-select toggle
   const handleToggle = useCallback((item: string) => {
     setSelectedItems((prev) => {
       const next = new Set(prev);
-      // Special: "Anywhere in NYC" is exclusive
       if (onboardingStep === 'q3_neighborhoods') {
         if (item === 'Anywhere in NYC') {
           return next.has(item) ? new Set() : new Set([item]);
@@ -225,7 +220,6 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
     if (selected.length === 0) return;
 
     if (onboardingStep === 'q2_interests') {
-      // Save interests for current child
       const updatedChildren = [...parsedChildren];
       updatedChildren[currentChildIndex] = { ...updatedChildren[currentChildIndex], interests: selected };
       setParsedChildren(updatedChildren);
@@ -235,13 +229,11 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
 
       const nextIdx = currentChildIndex + 1;
       if (nextIdx < parsedChildren.length) {
-        // Next child
         setCurrentChildIndex(nextIdx);
         const child = parsedChildren[nextIdx];
         const label = child.name || `your ${child.age}-year-old`;
         setMessages((prev) => [...prev, { role: 'assistant', content: `What does ${label} enjoy?` }]);
       } else {
-        // All children done — skip summary, go straight to Q3
         partialProfileRef.current.children = updatedChildren;
         applyProfileFilters(partialProfileRef.current);
         setOnboardingStep('q3_neighborhoods');
@@ -282,12 +274,12 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
     applyProfileFilters(finalProfile);
 
     const childrenDesc = finalProfile.children.map((c) =>
-      `${genderEmoji(c.gender)} ${c.name || `${c.age}yo`} — ${c.interests.join(', ')}`
+      `${genderEmoji(c.gender)} ${c.name || `${c.age}yo`} \u2014 ${c.interests.join(', ')}`
     ).join('\n');
 
     setMessages((prev) => [...prev, {
       role: 'assistant',
-      content: `All set! Here's your profile:\n\n${childrenDesc}\n📍 ${finalProfile.neighborhoods.length ? finalProfile.neighborhoods.join(', ') : 'Anywhere in NYC'}\n💰 ${finalProfile.budget}${finalProfile.specialNeeds ? `\n📝 ${finalProfile.specialNeeds}` : ''}\n\nAsk me anything about events!`,
+      content: `All set! Here's your profile:\n\n${childrenDesc}\n\uD83D\uDCCD ${finalProfile.neighborhoods.length ? finalProfile.neighborhoods.join(', ') : 'Anywhere in NYC'}\n\uD83D\uDCB0 ${finalProfile.budget}${finalProfile.specialNeeds ? `\n\uD83D\uDCDD ${finalProfile.specialNeeds}` : ''}\n\nAsk me anything about events!`,
     }]);
   }, [parsedChildren, applyProfileFilters]);
 
@@ -312,21 +304,18 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
     const msgText = (text || input).trim();
     if (!msgText || loading) return;
 
-    // Reset commands
     if (msgText.toLowerCase() === 'reset' || msgText.toLowerCase() === '/start') {
       setInput('');
       resetProfile();
       return;
     }
 
-    // Q1: parse children
     if (onboardingStep === 'q1_children') {
       setInput('');
       await parseChildren(msgText);
       return;
     }
 
-    // Q5: save special needs
     if (onboardingStep === 'q5_special') {
       setInput('');
       setMessages((prev) => [...prev, { role: 'user', content: msgText }]);
@@ -335,7 +324,6 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
       return;
     }
 
-    // Normal chat (post-onboarding)
     if (!onboardingDone) {
       setInput('');
       return;
@@ -422,16 +410,6 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
 
   const chatContent = (
     <div className="chat-sidebar-inner">
-      <div className="chat-sidebar-header">
-        <span className="font-semibold text-sm text-white">Chat Assistant</span>
-        <button
-          onClick={() => setMobileOpen(false)}
-          className="md:hidden w-7 h-7 flex items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10"
-        >
-          &#10005;
-        </button>
-      </div>
-
       <div className="chat-sidebar-messages">
         <ChatMessages
           messages={messages}
@@ -454,7 +432,7 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               rows={1}
-              className="flex-1 resize-none px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-[#e91e63] max-h-24"
+              className="flex-1 resize-none px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-xl text-sm focus:outline-none focus:border-[#e91e63] max-h-24 bg-[#16143a] text-white placeholder-gray-500"
               style={{ minHeight: 38 }}
             />
             <button
@@ -477,8 +455,10 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
 
   return (
     <>
-      <aside className="chat-sidebar-desktop">{chatContent}</aside>
+      {/* Desktop: render inline (parent handles layout) */}
+      <div className="hidden md:flex flex-col flex-1 min-h-0">{chatContent}</div>
 
+      {/* Mobile: FAB + slide-up panel */}
       <button onClick={() => setMobileOpen(true)} className="chat-mobile-fab" style={{ backgroundColor: '#e91e63' }}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -493,7 +473,18 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
       {mobileOpen && (
         <>
           <div className="chat-mobile-backdrop" onClick={() => setMobileOpen(false)} />
-          <div className="chat-mobile-panel">{chatContent}</div>
+          <div className="chat-mobile-panel">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(255,255,255,0.08)]">
+              <span className="font-semibold text-sm text-white">Pulse Assistant</span>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-[rgba(255,255,255,0.06)]"
+              >
+                &#10005;
+              </button>
+            </div>
+            {chatContent}
+          </div>
         </>
       )}
     </>

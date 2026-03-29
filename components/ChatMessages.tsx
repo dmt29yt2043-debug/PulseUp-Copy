@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import type { ChatMessage, ChildProfile, Event } from '@/lib/types';
 
 const THINKING_STEPS = [
-  'Understanding your request…',
-  'Searching the event database…',
-  'Matching your preferences…',
-  'Picking the best options…',
+  'Understanding your request\u2026',
+  'Searching the event database\u2026',
+  'Matching your preferences\u2026',
+  'Picking the best options\u2026',
 ];
 
 function ThinkingIndicator() {
@@ -21,7 +21,7 @@ function ThinkingIndicator() {
   }, [stepIndex]);
 
   return (
-    <div className="inline-block max-w-[85%] px-3 py-2 rounded-xl text-sm leading-relaxed bg-gray-100 text-gray-800">
+    <div className="inline-block max-w-[85%] px-3 py-2 rounded-xl text-sm leading-relaxed bg-[#1e1b4b] text-gray-300">
       <div className="space-y-1">
         {THINKING_STEPS.slice(0, stepIndex + 1).map((step, i) => {
           const isActive = i === stepIndex && stepIndex < THINKING_STEPS.length - 1;
@@ -29,7 +29,7 @@ function ThinkingIndicator() {
           return (
             <div key={i} className="flex items-center gap-1.5 thinking-step-enter">
               {isDone && !isActive ? (
-                <svg className="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <svg className="w-3.5 h-3.5 text-green-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               ) : (
@@ -37,7 +37,7 @@ function ThinkingIndicator() {
                   <span className="thinking-dot" />
                 </span>
               )}
-              <span className={isDone && !isActive ? 'text-gray-400' : 'text-gray-700 font-medium'}>
+              <span className={isDone && !isActive ? 'text-gray-500' : 'text-gray-200 font-medium'}>
                 {step}
               </span>
             </div>
@@ -49,12 +49,12 @@ function ThinkingIndicator() {
 }
 
 function genderEmoji(gender: string): string {
-  return gender === 'girl' ? '👧' : gender === 'boy' ? '👦' : '🧒';
+  return gender === 'girl' ? '\uD83D\uDC67' : gender === 'boy' ? '\uD83D\uDC66' : '\uD83E\uDDD2';
 }
 
 const INTEREST_EMOJIS: Record<string, string> = {
-  'Active': '⚽', 'Creative': '🎨', 'Educational': '📚', 'Shows': '🎭',
-  'Outdoor': '🌳', 'Fun & Play': '🎮', 'Adventure': '🏔️', 'Books': '📖', 'Social': '👫',
+  'Active': '\u26BD', 'Creative': '\uD83C\uDFA8', 'Educational': '\uD83D\uDCDA', 'Shows': '\uD83C\uDFAD',
+  'Outdoor': '\uD83C\uDF33', 'Fun & Play': '\uD83C\uDFAE', 'Adventure': '\uD83C\uDFD4\uFE0F', 'Books': '\uD83D\uDCD6', 'Social': '\uD83D\uDC6B',
 };
 
 function ChildSummaryBlock({ children }: { children: ChildProfile[] }) {
@@ -63,7 +63,7 @@ function ChildSummaryBlock({ children }: { children: ChildProfile[] }) {
       {children.map((child, i) => (
         <div key={i} className="flex items-center gap-2 py-1">
           <span className="text-lg">{genderEmoji(child.gender)}</span>
-          <span className="text-sm font-medium">
+          <span className="text-sm font-medium text-white">
             {child.name || `Child ${i + 1}`}, {child.age}yo
           </span>
         </div>
@@ -79,13 +79,13 @@ function InterestSummaryBlock({ children }: { children: ChildProfile[] }) {
         <div key={i} className="py-1.5">
           <div className="flex items-center gap-1.5">
             <span className="text-lg">{genderEmoji(child.gender)}</span>
-            <span className="text-xs font-semibold text-gray-700">
+            <span className="text-xs font-semibold text-gray-300">
               {child.name || `${child.age}yo`}
             </span>
           </div>
           <div className="flex flex-wrap gap-1 mt-1 ml-7">
             {child.interests.map((int) => (
-              <span key={int} className="text-[11px] bg-pink-50 text-pink-700 px-1.5 py-0.5 rounded-full">
+              <span key={int} className="text-[11px] bg-[rgba(233,30,99,0.15)] text-pink-300 px-1.5 py-0.5 rounded-full">
                 {INTEREST_EMOJIS[int] || ''} {int}
               </span>
             ))}
@@ -132,7 +132,7 @@ export default function ChatMessages({
                   className={`inline-block max-w-[85%] px-3 py-2 rounded-xl text-sm leading-relaxed whitespace-pre-line ${
                     msg.role === 'user'
                       ? 'ml-auto bg-[#e91e63] text-white float-right'
-                      : 'bg-gray-100 text-gray-800'
+                      : 'bg-[#1e1b4b] text-gray-200'
                   }`}
                 >
                   {msg.content}
@@ -158,14 +158,14 @@ export default function ChatMessages({
                   <button
                     key={event.id}
                     onClick={() => onEventClick(event)}
-                    className="flex-shrink-0 bg-white rounded-lg p-2 text-left shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                    className="flex-shrink-0 bg-[#1e1b4b] rounded-lg p-2 text-left shadow-sm border border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.2)] transition-all"
                     style={{ width: 160 }}
                   >
                     {event.image_url && (
                       <img src={event.image_url} alt="" className="w-full h-16 object-cover rounded mb-1" />
                     )}
-                    <p className="text-xs font-semibold text-gray-900 line-clamp-2">{event.title}</p>
-                    <p className="text-[10px] text-gray-500 mt-0.5">{event.is_free ? 'Free' : event.price_summary}</p>
+                    <p className="text-xs font-semibold text-white line-clamp-2">{event.title}</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">{event.is_free ? 'Free' : event.price_summary}</p>
                   </button>
                 ))}
               </div>
@@ -194,7 +194,7 @@ export default function ChatMessages({
                         onClick={() => multiSelectState.onToggle(opt)}
                         className={`multi-select-btn ${isSelected ? 'selected' : ''}`}
                       >
-                        {isSelected && <span className="mr-1">✓</span>}
+                        {isSelected && <span className="mr-1">{'\u2713'}</span>}
                         {opt}
                       </button>
                     );
