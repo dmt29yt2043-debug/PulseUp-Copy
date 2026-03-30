@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { ChatMessage, ChildProfile } from '@/lib/types';
+import type { ChatMessage, ChildProfile, Event } from '@/lib/types';
 
 const THINKING_STEPS = [
   'Understanding your request\u2026',
@@ -107,7 +107,7 @@ export interface MultiSelectState {
 interface ChatMessagesProps {
   messages: ChatMessage[];
   isLoading?: boolean;
-  onEventClick?: (event: unknown) => void;
+  onEventClick?: (event: Event) => void;
   onQuickReply?: (reply: string) => void;
   multiSelectState?: MultiSelectState | null;
   onSkip?: () => void;
