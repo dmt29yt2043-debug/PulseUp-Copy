@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { ChatMessage, ChildProfile, Event } from '@/lib/types';
+import type { ChatMessage, ChildProfile } from '@/lib/types';
 
 const THINKING_STEPS = [
   'Understanding your request\u2026',
@@ -107,14 +107,14 @@ export interface MultiSelectState {
 interface ChatMessagesProps {
   messages: ChatMessage[];
   isLoading?: boolean;
-  onEventClick: (event: Event) => void;
+  onEventClick?: (event: unknown) => void;
   onQuickReply?: (reply: string) => void;
   multiSelectState?: MultiSelectState | null;
   onSkip?: () => void;
 }
 
 export default function ChatMessages({
-  messages, isLoading, onEventClick, onQuickReply,
+  messages, isLoading, onQuickReply,
   multiSelectState, onSkip,
 }: ChatMessagesProps) {
   if (messages.length === 0 && !isLoading) return null;
@@ -151,25 +151,6 @@ export default function ChatMessages({
               <InterestSummaryBlock children={msg.interestSummary} />
             )}
 
-            {/* Inline event cards from assistant */}
-            {msg.role === 'assistant' && msg.events && msg.events.length > 0 && (
-              <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                {msg.events.slice(0, 5).map((event) => (
-                  <button
-                    key={event.id}
-                    onClick={() => onEventClick(event)}
-                    className="flex-shrink-0 bg-[#1e1b4b] rounded-lg p-2 text-left shadow-sm border border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.2)] transition-all"
-                    style={{ width: 160 }}
-                  >
-                    {event.image_url && (
-                      <img src={event.image_url} alt="" className="w-full h-16 object-cover rounded mb-1" />
-                    )}
-                    <p className="text-xs font-semibold text-white line-clamp-2">{event.title}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{event.is_free ? 'Free' : event.price_summary}</p>
-                  </button>
-                ))}
-              </div>
-            )}
 
             {/* Quick reply buttons - only show on the last assistant message */}
             {msg.role === 'assistant' && isLast && msg.quickReplies && msg.quickReplies.length > 0 && onQuickReply && (
