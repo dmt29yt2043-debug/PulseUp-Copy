@@ -10,6 +10,8 @@ import WhenFilter from '@/components/FilterDialogs/WhenFilter';
 import BudgetFilter from '@/components/FilterDialogs/BudgetFilter';
 import WhoFilter from '@/components/FilterDialogs/WhoFilter';
 import EventCardV2 from '@/components/EventCardV2';
+import FavoritesPanel from '@/components/FavoritesPanel';
+import { FavoritesProvider, useFavorites } from '@/lib/FavoritesContext';
 import type { MapBounds } from '@/components/discovery/discovery-state';
 
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
@@ -47,6 +49,10 @@ function formatBudget(filters: FilterState): string {
 }
 
 export default function Home() {
+  return <FavoritesProvider><HomeInner /></FavoritesProvider>;
+}
+
+function HomeInner() {
   // Data state
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
@@ -61,6 +67,7 @@ export default function Home() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [openFilter, setOpenFilter] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'feed' | 'foryou'>('feed');
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
 
   // Price range slider
   const [priceSlider, setPriceSlider] = useState(200);
@@ -72,6 +79,7 @@ export default function Home() {
   const [searchAreaActive, setSearchAreaActive] = useState(false);
   const [boundsFiltered, setBoundsFiltered] = useState(false);
 
+  const { favorites } = useFavorites();
   const resultsRef = useRef<HTMLDivElement>(null);
 
   // Fetch categories on mount
@@ -319,10 +327,21 @@ export default function Home() {
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
           </button>
-          <button className="v2-header-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <button className="v2-header-icon" onClick={() => setFavoritesOpen(true)} style={{ position: 'relative' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill={favorites.size > 0 ? '#e91e63' : 'none'} stroke={favorites.size > 0 ? '#e91e63' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
+            {favorites.size > 0 && (
+              <span style={{
+                position: 'absolute', top: -4, right: -4,
+                background: '#e91e63', color: 'white',
+                fontSize: 9, fontWeight: 700,
+                width: 16, height: 16, borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {favorites.size}
+              </span>
+            )}
           </button>
           <div className="v2-header-avatar">M</div>
         </div>
@@ -546,6 +565,15 @@ export default function Home() {
           onClose={() => setOpenFilter(null)}
         />
       )}
+
+      <FavoritesPanel
+        open={favoritesOpen}
+        onClose={() => setFavoritesOpen(false)}
+        onEventClick={(event) => {
+          setSelectedEvent(event);
+          setDetailOpen(true);
+        }}
+      />
     </div>
   );
 }

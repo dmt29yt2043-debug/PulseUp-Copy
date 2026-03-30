@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { Event } from '@/lib/types';
+import { useFavorites } from '@/lib/FavoritesContext';
 
 interface EventDetailProps {
   event: Event | null;
@@ -108,8 +109,9 @@ function ReviewsSection({ event }: { event: Event }) {
 }
 
 export default function EventDetail({ event, open, onClose }: EventDetailProps) {
-  const [liked, setLiked] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const { isFavorite, toggle } = useFavorites();
+  const liked = event ? isFavorite(event.id) : false;
 
   if (!event) return null;
 
@@ -150,7 +152,7 @@ export default function EventDetail({ event, open, onClose }: EventDetailProps) 
           <div className="flex items-start justify-between gap-2">
             <h2 className="text-xl font-bold text-white leading-snug">{event.title}</h2>
             <button
-              onClick={() => setLiked(!liked)}
+              onClick={() => event && toggle(event)}
               className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full border border-[rgba(255,255,255,0.15)] hover:border-pink-400 transition-colors"
             >
               <span style={{ color: liked ? '#e91e63' : '#9ca3af', fontSize: 18 }}>

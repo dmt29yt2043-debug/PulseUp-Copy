@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { Event } from '@/lib/types';
+import { useFavorites } from '@/lib/FavoritesContext';
 
 interface EventCardV2Props {
   event: Event;
@@ -42,12 +43,13 @@ export default function EventCardV2({
   onClick,
 }: EventCardV2Props) {
   const [imgError, setImgError] = useState(false);
-  const [liked, setLiked] = useState(false);
+  const { isFavorite, toggle } = useFavorites();
+  const liked = isFavorite(event.id);
   const priceText = formatPrice(event);
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setLiked(!liked);
+    toggle(event);
   };
 
   return (
