@@ -135,7 +135,7 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
   // Fix 2: Location text search (venue, address, city, district)
   if (filters.location) {
     params.location = `%${filters.location}%`;
-    conditions.push('(venue_name LIKE @location OR address LIKE @location OR city LIKE @location OR city_district LIKE @location OR city_locality LIKE @location)');
+    conditions.push('(venue_name LIKE @location OR address LIKE @location OR city LIKE @location)');
   }
 
   // Fix 3: Accessibility filters (search in JSON data field)
