@@ -94,14 +94,12 @@ export default function EventCardV2({
           <p className="event-card-v2-venue">{event.venue_name}</p>
         )}
 
-        <p className="event-card-v2-date">{formatDate(event.next_start_at)}</p>
-
-        {/* Price badge */}
-        {priceText && (
-          <span className="event-card-v2-price">
-            {priceText}
-          </span>
-        )}
+        <div className="event-card-v2-bottom">
+          <p className="event-card-v2-date">{formatDate(event.next_start_at)}</p>
+          {priceText && (
+            <span className="event-card-v2-price">{priceText}</span>
+          )}
+        </div>
       </div>
     </div>
   );
