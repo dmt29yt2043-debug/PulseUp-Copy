@@ -285,21 +285,9 @@ export default function Home() {
       {/* ===== Header ===== */}
       <header className="v2-header">
         {/* Logo */}
-        <div className="v2-header-logo">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-            <defs>
-              <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#e91e63" />
-                <stop offset="100%" stopColor="#ff6090" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-              fill="url(#heartGrad)"
-            />
-          </svg>
-          <span>Pulse</span>
-        </div>
+        <button onClick={() => window.location.reload()} className="v2-header-logo" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+          <img src="/logo.png" alt="Pulse" style={{ height: 36, width: 'auto' }} />
+        </button>
 
         {/* Center: title + tabs */}
         <div className="flex items-center gap-4">
