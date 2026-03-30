@@ -341,7 +341,6 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: msgText,
-          filters,
           history: newMessages.map((m) => ({ role: m.role, content: m.content })),
           profile,
         }),

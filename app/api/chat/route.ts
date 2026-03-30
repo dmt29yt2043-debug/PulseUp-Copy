@@ -213,18 +213,11 @@ Return ONLY the JSON object.`,
       content: contextMessage,
     });
 
-    // Add current user message
-    if (existingFilters) {
-      messages.push({
-        role: 'user',
-        content: `${message}\n\n(Current active filters: ${JSON.stringify(existingFilters)})`,
-      });
-    } else {
-      messages.push({
-        role: 'user',
-        content: message,
-      });
-    }
+    // Add current user message (no old filters — each query starts fresh)
+    messages.push({
+      role: 'user',
+      content: message,
+    });
 
     // Call OpenAI with function calling
     const completion = await openai.chat.completions.create({
