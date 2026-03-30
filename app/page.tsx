@@ -63,7 +63,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'feed' | 'foryou'>('feed');
 
   // Price range slider
-  const [priceSlider, setPriceSlider] = useState(850);
+  const [priceSlider, setPriceSlider] = useState(200);
 
   // Discovery state
   const [hoveredItemId, setHoveredItemId] = useState<number | null>(null);
@@ -271,7 +271,7 @@ export default function Home() {
   const handlePriceSliderCommit = useCallback(() => {
     setFilters((prev) => ({
       ...prev,
-      priceMax: priceSlider < 850 ? priceSlider : undefined,
+      priceMax: priceSlider < 200 ? priceSlider : undefined,
     }));
     setPage(1);
   }, [priceSlider]);
@@ -353,13 +353,13 @@ export default function Home() {
               <div className="v2-price-range-header">
                 <span className="v2-price-range-label">Price Range</span>
                 <span className="v2-price-range-value">
-                  $0 &ndash; ${priceSlider >= 850 ? '850+' : priceSlider}
+                  $0 &ndash; ${priceSlider >= 200 ? '200+' : priceSlider}
                 </span>
               </div>
               <input
                 type="range"
                 min="0"
-                max="850"
+                max="200"
                 value={priceSlider}
                 onChange={handlePriceSliderChange}
                 onMouseUp={handlePriceSliderCommit}
