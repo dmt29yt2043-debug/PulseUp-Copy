@@ -30,7 +30,6 @@ function formatDate(dateStr: string): string {
 function formatPrice(event: Event): string {
   if (event.is_free) return 'FREE';
   if (event.price_min > 0) return `$${event.price_min}`;
-  if (event.price_summary) return event.price_summary;
   return '';
 }
 
@@ -99,7 +98,7 @@ export default function EventCardV2({
 
         {/* Price badge */}
         {priceText && (
-          <span className={`event-card-v2-price ${event.is_free ? 'free' : ''}`}>
+          <span className="event-card-v2-price">
             {priceText}
           </span>
         )}

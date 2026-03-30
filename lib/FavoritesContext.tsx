@@ -4,56 +4,50 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import type { Event } from './types';
 
 interface FavoritesContextValue {
-  favorites: Set<number>;
+  favoriteIds: Set<number>;
+  favoriteEvents: Event[];
   toggle: (event: Event) => void;
   isFavorite: (id: number) => boolean;
-  favoriteEvents: Event[];
 }
 
 const FavoritesContext = createContext<FavoritesContextValue>({
-  favorites: new Set(),
+  favoriteIds: new Set(),
+  favoriteEvents: [],
   toggle: () => {},
   isFavorite: () => false,
-  favoriteEvents: [],
 });
 
 const STORAGE_KEY = 'pulseup_favorites';
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
-  const [favoriteMap, setFavoriteMap] = useState<Map<number, Event>>(new Map());
+  const [favoriteList, setFavoriteList] = useState<Event[]>([]);
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const arr: Event[] = JSON.parse(stored);
-        setFavoriteMap(new Map(arr.map((e) => [e.id, e])));
-      }
+      if (stored) setFavoriteList(JSON.parse(stored));
     } catch {}
   }, []);
 
   const toggle = useCallback((event: Event) => {
-    setFavoriteMap((prev) => {
-      const next = new Map(prev);
-      if (next.has(event.id)) {
-        next.delete(event.id);
-      } else {
-        next.set(event.id, event);
-      }
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(next.values())));
-      } catch {}
+    setFavoriteList((prev) => {
+      const exists = prev.some((e) => e.id === event.id);
+      const next = exists
+        ? prev.filter((e) => e.id !== event.id)
+        : [...prev, event];
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
       return next;
     });
   }, []);
 
-  const isFavorite = useCallback((id: number) => favoriteMap.has(id), [favoriteMap]);
-
-  const favorites = new Set(favoriteMap.keys());
-  const favoriteEvents = Array.from(favoriteMap.values());
+  const favoriteIds = new Set(favoriteList.map((e) => e.id));
+  const isFavorite = useCallback(
+    (id: number) => favoriteList.some((e) => e.id === id),
+    [favoriteList],
+  );
 
   return (
-    <FavoritesContext.Provider value={{ favorites, toggle, isFavorite, favoriteEvents }}>
+    <FavoritesContext.Provider value={{ favoriteIds, favoriteEvents: favoriteList, toggle, isFavorite }}>
       {children}
     </FavoritesContext.Provider>
   );
