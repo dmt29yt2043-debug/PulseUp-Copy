@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { getEvents, getEventsForChat } from '@/lib/db';
+import { getEvents, getEventsForChat, getCategories } from '@/lib/db';
 import type { FilterState, ChatMessage, UserProfile } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -10,7 +10,24 @@ const openai = new OpenAI({
   timeout: 60000,
 });
 
-const SYSTEM_PROMPT = `You are an event discovery assistant for PulseUp, helping users find activities and events in New York City for families and kids.
+function buildSystemPrompt(): string {
+  // Fix 1: Dynamic current date
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' });
+
+  // Fix 4: Dynamic categories from DB
+  let categoryList: string;
+  try {
+    const cats = getCategories();
+    categoryList = cats.map((c) => c.value).join(', ');
+  } catch {
+    categoryList = 'family, arts, theater, attractions, books, holiday, sports, music, science, film, gaming, community';
+  }
+
+  return `You are an event discovery assistant for PulseUp, helping users find activities and events in New York City for families and kids.
+
+TODAY'S DATE: ${today} (${dayOfWeek}). Use this to calculate "this weekend", "tomorrow", "next week", etc. The year is ${now.getFullYear()}.
 
 CRITICAL RESPONSE FORMAT RULES:
 - Keep your text response to 1-3 SHORT sentences maximum. The event details are shown as visual cards below your message — do NOT list events in your text.
@@ -19,20 +36,14 @@ CRITICAL RESPONSE FORMAT RULES:
 - If no events match, suggest broadening the search in 1-2 sentences.
 - If the request is vague, ask ONE short clarifying question.
 
-When a user describes what they're looking for, extract structured filters from their message.
+When a user describes what they're looking for, ALWAYS call the extract_filters function with appropriate filters.
 
-Available categories: family, arts, theater, attractions, books, holiday, sports, Art, Children's Activities
+Available categories: ${categoryList}
 
-Filter field names:
-- categories: array of category strings to include
-- excludeCategories: array of category strings to exclude
-- priceMin: minimum price (number)
-- priceMax: maximum price (number)
-- isFree: true if user wants free events only
-- ageMax: maximum age the user mentioned (to find age-appropriate events)
-- dateFrom: ISO date string for start of date range
-- dateTo: ISO date string for end of date range
-- search: text search query for specific topics/keywords`;
+LOCATION TIPS: When the user mentions a neighborhood or borough (Brooklyn, Midtown, Bronx, etc.), use the "location" filter. This searches venue names, addresses, and city districts.
+
+ACCESSIBILITY: If the user asks about wheelchair access or stroller-friendly events, use the corresponding boolean filters.`;
+}
 
 const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
   {
@@ -46,7 +57,7 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
           categories: {
             type: 'array',
             items: { type: 'string' },
-            description: 'Event categories to filter by (e.g., "family", "arts", "theater", "attractions", "books", "holiday", "sports")',
+            description: 'Event categories to filter by (e.g., "family", "arts", "theater", "attractions", "music", "science", "sports", "holiday")',
           },
           excludeCategories: {
             type: 'array',
@@ -71,7 +82,7 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
           },
           dateFrom: {
             type: 'string',
-            description: 'Start date in ISO format (YYYY-MM-DD)',
+            description: 'Start date in ISO format (YYYY-MM-DD). Use today\'s date context to compute relative dates like "this weekend", "tomorrow", etc.',
           },
           dateTo: {
             type: 'string',
@@ -79,7 +90,19 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
           },
           search: {
             type: 'string',
-            description: 'Free-text search query for specific topics or keywords',
+            description: 'Free-text search query for specific topics or keywords (e.g., "LEGO", "painting", "dance", "Easter")',
+          },
+          location: {
+            type: 'string',
+            description: 'Search by neighborhood, borough, or area name (e.g., "Brooklyn", "Midtown", "Bronx", "Upper Manhattan", "Queens"). Matches against venue names, addresses, and city districts.',
+          },
+          wheelchairAccessible: {
+            type: 'boolean',
+            description: 'Filter for wheelchair-accessible venues only',
+          },
+          strollerFriendly: {
+            type: 'boolean',
+            description: 'Filter for stroller-friendly venues only',
           },
         },
         required: [],
@@ -142,7 +165,7 @@ Return ONLY the JSON object.`,
     }
 
     // Build conversation messages
-    let systemContent = SYSTEM_PROMPT;
+    let systemContent = buildSystemPrompt();
     if (profile) {
       // Support both old and new profile shapes
       if ('children' in profile && Array.isArray(profile.children)) {
@@ -176,12 +199,12 @@ Return ONLY the JSON object.`,
       }
     }
 
-    // Provide event context summary
+    // Provide event context summary (Fix 5: mixed upcoming + top-rated)
     const eventsSummary = getEventsForChat();
-    const contextMessage = `Here is a summary of available events:\n${eventsSummary
+    const contextMessage = `Here is a summary of available events (${eventsSummary.length} shown):\n${eventsSummary
       .map(
         (e) =>
-          `- [${e.id}] ${e.title} | ${e.category_l1} | ${e.venue_name} | ${e.next_start_at} | ${e.is_free ? 'Free' : e.price_summary} | ${e.age_label}`
+          `- [${e.id}] ${e.title} | ${e.category_l1 || 'general'} | ${e.venue_name} | ${e.city || ''}${e.address ? ', ' + e.address : ''} | ${e.next_start_at} | ${e.is_free ? 'Free' : e.price_summary} | ${e.age_label}`
       )
       .join('\n')}`;
 

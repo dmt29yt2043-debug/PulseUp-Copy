@@ -132,6 +132,20 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
     conditions.push('(title LIKE @search OR description LIKE @search OR tagline LIKE @search OR tags LIKE @search)');
   }
 
+  // Fix 2: Location text search (venue, address, city, district)
+  if (filters.location) {
+    params.location = `%${filters.location}%`;
+    conditions.push('(venue_name LIKE @location OR address LIKE @location OR city LIKE @location OR city_district LIKE @location OR city_locality LIKE @location)');
+  }
+
+  // Fix 3: Accessibility filters (search in JSON data field)
+  if (filters.wheelchairAccessible) {
+    conditions.push("data LIKE '%\"venue_wheelchair_accessible\": true%' OR data LIKE '%\"venue_wheelchair_accessible\":true%'");
+  }
+  if (filters.strollerFriendly) {
+    conditions.push("data LIKE '%\"venue_stroller_friendly\": true%' OR data LIKE '%\"venue_stroller_friendly\":true%'");
+  }
+
   // Neighborhood bounding-box filter
   if (filters.neighborhoods && filters.neighborhoods.length > 0 && !filters.neighborhoods.includes('Anywhere in NYC')) {
     const nbConds: string[] = [];
@@ -225,22 +239,42 @@ export function getCategories(): { value: string; label: string }[] {
   }));
 }
 
-export function getEventsForChat(query?: string): { id: number; title: string; category_l1: string; tagline: string; venue_name: string; next_start_at: string; is_free: boolean; price_summary: string; age_label: string; city: string }[] {
+export function getEventsForChat(query?: string): { id: number; title: string; category_l1: string; tagline: string; venue_name: string; next_start_at: string; is_free: boolean; price_summary: string; age_label: string; city: string; address: string }[] {
   const db = getDb();
 
-  let sql = `SELECT id, title, category_l1, tagline, venue_name, next_start_at, is_free, price_summary, age_label, city FROM events WHERE status = 'published' AND title NOT LIKE '%Rewards%' AND title NOT LIKE '%Royalty%' AND title NOT LIKE '%Loyalty%' AND title NOT LIKE '%Club Baja%' AND title NOT LIKE '%Join Club%' AND category_l1 NOT IN ('food', 'networking')`;
-  const params: Record<string, unknown> = {};
+  const baseWhere = `status = 'published' AND title NOT LIKE '%Rewards%' AND title NOT LIKE '%Royalty%' AND title NOT LIKE '%Loyalty%' AND title NOT LIKE '%Club Baja%' AND title NOT LIKE '%Join Club%' AND (category_l1 IS NULL OR category_l1 NOT IN ('food', 'networking'))`;
+  const fields = `id, title, category_l1, tagline, venue_name, next_start_at, is_free, price_summary, age_label, city, address`;
 
+  let searchWhere = '';
+  const params: Record<string, unknown> = {};
   if (query) {
     params.search = `%${query}%`;
-    sql += ` AND (title LIKE @search OR tagline LIKE @search OR description LIKE @search OR tags LIKE @search)`;
+    searchWhere = ` AND (title LIKE @search OR tagline LIKE @search OR description LIKE @search OR tags LIKE @search)`;
   }
 
-  sql += ' ORDER BY next_start_at ASC LIMIT 100';
+  // Fix 5: Mix of upcoming events + highest rated for better context
+  // 60 nearest upcoming events + 40 highest-rated events (deduplicated)
+  const upcoming = db.prepare(
+    `SELECT ${fields} FROM events WHERE ${baseWhere}${searchWhere} ORDER BY next_start_at ASC LIMIT 60`
+  ).all(params) as Record<string, unknown>[];
 
-  const rows = db.prepare(sql).all(params) as Record<string, unknown>[];
-  return rows.map((row) => ({
+  const topRated = db.prepare(
+    `SELECT ${fields} FROM events WHERE ${baseWhere}${searchWhere} ORDER BY rating_avg DESC, rating_count DESC LIMIT 40`
+  ).all(params) as Record<string, unknown>[];
+
+  // Deduplicate
+  const seen = new Set<number>();
+  const combined: Record<string, unknown>[] = [];
+  for (const row of [...upcoming, ...topRated]) {
+    const id = row.id as number;
+    if (!seen.has(id)) {
+      seen.add(id);
+      combined.push(row);
+    }
+  }
+
+  return combined.slice(0, 100).map((row) => ({
     ...row,
     is_free: Boolean(row.is_free),
-  })) as { id: number; title: string; category_l1: string; tagline: string; venue_name: string; next_start_at: string; is_free: boolean; price_summary: string; age_label: string; city: string }[];
+  })) as { id: number; title: string; category_l1: string; tagline: string; venue_name: string; next_start_at: string; is_free: boolean; price_summary: string; age_label: string; city: string; address: string }[];
 }

@@ -79,6 +79,9 @@ export interface FilterState {
   distance?: number;
   search?: string;
   neighborhoods?: string[];
+  location?: string;
+  wheelchairAccessible?: boolean;
+  strollerFriendly?: boolean;
 }
 
 export interface ChildProfile {

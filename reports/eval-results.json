@@ -1,0 +1,742 @@
+[
+  {
+    "id": 1,
+    "category": "Weekend Planning",
+    "query": "What can we do this weekend?",
+    "expectedIntent": "Events happening this Saturday/Sunday, family-friendly",
+    "extractedFilters": {
+      "dateFrom": "2026-04-02",
+      "dateTo": "2026-04-04",
+      "location": "Midtown",
+      "priceMax": 50
+    },
+    "eventsReturned": 3,
+    "topEvents": [
+      "The East Midtown Easter Egg Hunt",
+      "The East Midtown Easter Egg Hunt 2026",
+      "The East Midtown Easter Egg Hunt 2026"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 24,
+    "broaderSearchTopEvents": [
+      "Italian Cooking Class for Children - Winter/Spring 2026 (Manhattan)",
+      "Fantastic Fungi Mushroom ID Hike",
+      "Newsies JR."
+    ],
+    "relevanceScore": 5,
+    "completenessScore": 2,
+    "ageFitScore": 5,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "The events returned are highly relevant, being family-friendly and free. However, several age-appropriate events, like 'Don’t Let the Pigeon Drive the Bus! The Musical!', were missed in the database search due to filtering, indicating incomplete results."
+  },
+  {
+    "id": 2,
+    "category": "Weekend Planning",
+    "query": "Any free events tomorrow?",
+    "expectedIntent": "Free events on the next day, any category",
+    "extractedFilters": {
+      "isFree": true,
+      "dateFrom": "2026-03-31",
+      "dateTo": "2026-03-31"
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Flavor Fanatic",
+      "Join Club Applebee's®",
+      "Unity by Hard Rock"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 38,
+    "broaderSearchTopEvents": [
+      "My Cold Stone Club Rewards",
+      "Starbucks® Rewards",
+      "Red Robin Royalty Program"
+    ],
+    "relevanceScore": 2,
+    "completenessScore": 1,
+    "ageFitScore": 2,
+    "diagnosis": "db_gap",
+    "judgeExplanation": "The events returned are mostly promotional programs and not suitable for young children, with none specifically matching the user's query for free events suitable for a 6-year-old and a 3-year-old. The system failed to find age-appropriate free events for the requested date."
+  },
+  {
+    "id": 3,
+    "category": "Weekend Planning",
+    "query": "What's happening on Easter?",
+    "expectedIntent": "Easter/holiday/spring events around Easter date",
+    "extractedFilters": {
+      "dateFrom": "2026-04-04",
+      "dateTo": "2026-04-04",
+      "location": "",
+      "categories": [
+        "family"
+      ]
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Unity by Hard Rock",
+      "Landry's Select Club",
+      "DSW VIP Program"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 1,
+    "broaderSearchTopEvents": [
+      "Newsies JR."
+    ],
+    "relevanceScore": 2,
+    "completenessScore": 2,
+    "ageFitScore": 3,
+    "diagnosis": "pipeline_issue",
+    "judgeExplanation": "The returned events are not directly relevant to Easter activities, and many missed upcoming family events that likely exist around the holiday. Age appropriateness varies, with only some events suitable for both children."
+  },
+  {
+    "id": 4,
+    "category": "Weekend Planning",
+    "query": "Activities for a rainy day?",
+    "expectedIntent": "Indoor activities, museums, theaters, workshops",
+    "extractedFilters": {
+      "categories": [
+        "family",
+        "arts",
+        "theater",
+        "attractions",
+        "children's activities"
+      ],
+      "location": "Midtown"
+    },
+    "eventsReturned": 3,
+    "topEvents": [
+      "The East Midtown Easter Egg Hunt",
+      "The East Midtown Easter Egg Hunt 2026",
+      "The East Midtown Easter Egg Hunt 2026"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 20,
+    "broaderSearchTopEvents": [
+      "My Cold Stone Club Rewards",
+      "Einstein's Bagels Rewards Program",
+      "Panera Bread MyPanera Rewards Program"
+    ],
+    "relevanceScore": 2,
+    "completenessScore": 2,
+    "ageFitScore": 3,
+    "diagnosis": "pipeline_issue",
+    "judgeExplanation": "The returned events primarily feature an Easter egg hunt, which may not be suitable for a rainy day indoor activity. Additionally, it seems there are suitable indoor events for the age group that were missed in the search results."
+  },
+  {
+    "id": 5,
+    "category": "Age-Specific",
+    "query": "My son is 3, what's good for him?",
+    "expectedIntent": "Events for ages 0-5, toddler-friendly",
+    "extractedFilters": {
+      "ageMax": 3
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Unity by Hard Rock",
+      "Landry's Select Club",
+      "DSW VIP Program"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 21,
+    "broaderSearchTopEvents": [
+      "Newsies JR.",
+      "My Cold Stone Club Rewards",
+      "Flavor Fanatic"
+    ],
+    "relevanceScore": 3,
+    "completenessScore": 3,
+    "ageFitScore": 4,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "While the events listed include some that are appropriate for a 3-year-old, such as RECESS!! and The Orchid Show, several entries are unrelated to the user's query. There may be more relevant events for toddlers that were not included."
+  },
+  {
+    "id": 6,
+    "category": "Age-Specific",
+    "query": "Theater for a 7-year-old girl",
+    "expectedIntent": "Theater/shows events, age-appropriate for 7yo",
+    "extractedFilters": {
+      "categories": [
+        "theater"
+      ],
+      "ageMax": 7
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Pete the Cat",
+      "Aladdin & the Wonderful Lamp",
+      "The Very Hungry Caterpillar Interactive Show"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 27,
+    "broaderSearchTopEvents": [
+      "Pete the Cat",
+      "Aladdin & the Wonderful Lamp",
+      "Dead Father, Stepfather, Girl Father — A Comedy Show by A Chinese Queer Kid"
+    ],
+    "relevanceScore": 5,
+    "completenessScore": 4,
+    "ageFitScore": 5,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "The chatbot returned several relevant theater events suitable for a 7-year-old girl. However, there may be other relevant events that could fit the user's query that weren't included in the results."
+  },
+  {
+    "id": 7,
+    "category": "Age-Specific",
+    "query": "Something for a teenager, 13+",
+    "expectedIntent": "Events suitable for teens, not too childish",
+    "extractedFilters": {
+      "ageMax": 18
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Flavor Fanatic",
+      "Join Club Applebee's®",
+      "Unity by Hard Rock"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 0,
+    "broaderSearchTopEvents": [],
+    "relevanceScore": 1,
+    "completenessScore": 1,
+    "ageFitScore": 1,
+    "diagnosis": "db_gap",
+    "judgeExplanation": "The returned events are not relevant to the user's request for events suitable for teenagers and do not fit the age range for the children either. There is a lack of available events in the database for the specified query."
+  },
+  {
+    "id": 8,
+    "category": "Age-Specific",
+    "query": "Baby-friendly activities for under 2",
+    "expectedIntent": "Infant/baby events, sensory play, baby storytime",
+    "extractedFilters": {
+      "ageMax": 2,
+      "priceMax": 50,
+      "strollerFriendly": true
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Unity by Hard Rock",
+      "DSW VIP Program",
+      "Faith Ringgold: Artist, Storyteller, Activist"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 39,
+    "broaderSearchTopEvents": [
+      "My Cold Stone Club Rewards",
+      "Einstein's Bagels Rewards Program",
+      "Panera Bread MyPanera Rewards Program"
+    ],
+    "relevanceScore": 3,
+    "completenessScore": 2,
+    "ageFitScore": 3,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "While some events returned are baby-friendly or suitable for the user's query, the majority are not directly focused on infants under 2, leading to incomplete results for the specific needs of the user. Only one event (Coloring for Babies and Toddlers) closely matches the query."
+  },
+  {
+    "id": 9,
+    "category": "Interest-Based",
+    "query": "Art classes for kids",
+    "expectedIntent": "Arts/creative workshops, painting, crafts",
+    "extractedFilters": {
+      "categories": [
+        "arts",
+        "Children's Activities"
+      ],
+      "priceMax": 50,
+      "ageMax": 10
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle",
+      "Anish Kapoor: Mirror Works",
+      "Coloring for Babies and Toddlers"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 26,
+    "broaderSearchTopEvents": [
+      "Kohl's Rewards Program",
+      "Italian Cooking Class for Children - Winter/Spring 2026 (Manhattan)",
+      "Cooking and Art Lab for Children - Winter/Spring 2026"
+    ],
+    "relevanceScore": 5,
+    "completenessScore": 4,
+    "ageFitScore": 5,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "Most of the events returned are relevant to the user's query for art classes, particularly for Emma. However, it appears that some additional relevant art-related events (like the 'Cooking and Art Lab for Children') were missed in the broader search."
+  },
+  {
+    "id": 10,
+    "category": "Interest-Based",
+    "query": "Outdoor activities in Brooklyn",
+    "expectedIntent": "Outdoor/park events in Brooklyn area",
+    "extractedFilters": {
+      "location": "Brooklyn",
+      "categories": [
+        "sports",
+        "family",
+        "Children's Activities"
+      ],
+      "priceMax": 50
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Aladdin & the Wonderful Lamp",
+      "Aladdin & the Wonderful Lamp",
+      "Brooklyn Museum Sunday Art Hang"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 54,
+    "broaderSearchTopEvents": [
+      "Hicks Nurseries’ 36th Annual Flower & Garden Show",
+      "Spring Has Sprung Hike",
+      "US Coffee 4 Mile Run/Walk For LLS"
+    ],
+    "relevanceScore": 5,
+    "completenessScore": 4,
+    "ageFitScore": 5,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "The returned events are relevant to outdoor activities in Brooklyn and are suitable for the user's children. However, there might be additional outdoor events in the broader database that were not captured by the current filters."
+  },
+  {
+    "id": 11,
+    "category": "Interest-Based",
+    "query": "Science museums for kids",
+    "expectedIntent": "Science/educational museum events",
+    "extractedFilters": {
+      "categories": [
+        "science"
+      ],
+      "ageMax": 12
+    },
+    "eventsReturned": 5,
+    "topEvents": [
+      "Seal Cruise",
+      "Family Science: Sounds of Science",
+      "Eggstravaganza!"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 30,
+    "broaderSearchTopEvents": [
+      "Seal Cruise",
+      "Family Science: Sounds of Science",
+      "Nature Festival"
+    ],
+    "relevanceScore": 4,
+    "completenessScore": 3,
+    "ageFitScore": 5,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "The events returned are generally relevant, especially the free science events suitable for age 6. However, there are potentially relevant events like 'Open Hours at Environmental Education Center' that weren't found due to the initial filters applied."
+  },
+  {
+    "id": 12,
+    "category": "Interest-Based",
+    "query": "Dance or music classes",
+    "expectedIntent": "Music/dance classes or performances",
+    "extractedFilters": {
+      "categories": [
+        "children's activities",
+        "music"
+      ]
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "The Very Hungry Caterpillar Interactive Show",
+      "Olivia & Grease vs. Dolly & Divas @ Studio Theatre Long Island",
+      "Hopalong Andrew"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 38,
+    "broaderSearchTopEvents": [
+      "Italian Cooking Class for Children - Winter/Spring 2026 (Manhattan)",
+      "New York City Tartan Day Parade",
+      "Hopalong Andrew"
+    ],
+    "relevanceScore": 4,
+    "completenessScore": 3,
+    "ageFitScore": 5,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "Most returned events are age-appropriate and related to music or dance, but not all relevant options (like certain classes or performances) were captured, suggesting missed opportunities in the search criteria."
+  },
+  {
+    "id": 13,
+    "category": "Interest-Based",
+    "query": "Sports activities for boys age 8",
+    "expectedIntent": "Sports events, age 8, physical activities",
+    "extractedFilters": {
+      "categories": [
+        "sports"
+      ],
+      "ageMax": 8
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Pickleball Community Events",
+      "Girls Winter Softball Clinics",
+      "US Coffee 4 Mile Run/Walk For LLS"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 29,
+    "broaderSearchTopEvents": [
+      "Basketball Clinic at Southampton Youth Services (SYS)",
+      "Girls Winter Softball Clinics",
+      "ASPIRE 10K"
+    ],
+    "relevanceScore": 3,
+    "completenessScore": 3,
+    "ageFitScore": 2,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "While some events were relevant to sports activities, they did not specifically cater to the age 8 requirement. Additionally, several age-appropriate events for younger children, like Emma and Leo, were not included in the returned results."
+  },
+  {
+    "id": 14,
+    "category": "Budget-Conscious",
+    "query": "Free things to do with kids",
+    "expectedIntent": "Free events only, family-friendly",
+    "extractedFilters": {
+      "isFree": true,
+      "ageMax": 12
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Unity by Hard Rock",
+      "Landry's Select Club",
+      "DSW VIP Program"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 30,
+    "broaderSearchTopEvents": [
+      "My Cold Stone Club Rewards",
+      "Starbucks® Rewards",
+      "Red Robin Royalty Program"
+    ],
+    "relevanceScore": 4,
+    "completenessScore": 3,
+    "ageFitScore": 4,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "The returned events include some suitable free options for the children's age range, but there may be other relevant free activities in NYC that were not captured by the filters."
+  },
+  {
+    "id": 15,
+    "category": "Budget-Conscious",
+    "query": "Activities under $20 per person",
+    "expectedIntent": "Events with price_max <= 20",
+    "extractedFilters": {
+      "priceMax": 20
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Flavor Fanatic",
+      "Join Club Applebee's®",
+      "Unity by Hard Rock"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 55,
+    "broaderSearchTopEvents": [
+      "My Cold Stone Club Rewards",
+      "Einstein's Bagels Rewards Program",
+      "Panera Bread MyPanera Rewards Program"
+    ],
+    "relevanceScore": 1,
+    "completenessScore": 1,
+    "ageFitScore": 1,
+    "diagnosis": "db_gap",
+    "judgeExplanation": "The returned events are free but do not meet the user’s interest in activities priced under $20 per person, and they lack appropriate age-appropriate options for the children mentioned."
+  },
+  {
+    "id": 16,
+    "category": "Budget-Conscious",
+    "query": "Cheap weekend options for a family of 4",
+    "expectedIntent": "Budget-friendly weekend events, affordable",
+    "extractedFilters": {
+      "priceMax": 50,
+      "categories": [
+        "family"
+      ],
+      "dateFrom": "2026-04-01",
+      "dateTo": "2026-04-03"
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Unity by Hard Rock",
+      "Landry's Select Club",
+      "DSW VIP Program"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 27,
+    "broaderSearchTopEvents": [
+      "Hicks Nurseries’ 36th Annual Flower & Garden Show",
+      "Circus Vazquez",
+      "International Public Policy Forum (IPPF) Finals Weekend"
+    ],
+    "relevanceScore": 4,
+    "completenessScore": 3,
+    "ageFitScore": 5,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "The returned events include several budget-friendly options suitable for the ages of the children, but there may be additional relevant events that were not discovered due to filtering. Some great kid-friendly events may exist in the broader database that were overlooked."
+  },
+  {
+    "id": 17,
+    "category": "Location-Specific",
+    "query": "Events near Midtown Manhattan",
+    "expectedIntent": "Events in Midtown area geographically",
+    "extractedFilters": {
+      "location": "Midtown",
+      "categories": [
+        "family",
+        "arts",
+        "theater",
+        "attractions",
+        "books",
+        "holiday",
+        "sports",
+        "Art",
+        "Children's Activities",
+        "music",
+        "science",
+        "film",
+        "gaming",
+        "community"
+      ]
+    },
+    "eventsReturned": 3,
+    "topEvents": [
+      "The East Midtown Easter Egg Hunt",
+      "The East Midtown Easter Egg Hunt 2026",
+      "The East Midtown Easter Egg Hunt 2026"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 34,
+    "broaderSearchTopEvents": [
+      "DSW VIP Program",
+      "Pickleball Community Events",
+      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle"
+    ],
+    "relevanceScore": 5,
+    "completenessScore": 3,
+    "ageFitScore": 5,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "The returned events are highly relevant as they are family-oriented and free, aligning with the user's budget and children's age range. However, there may be other suitable events available that were not retrieved due to filtering limitations."
+  },
+  {
+    "id": 18,
+    "category": "Location-Specific",
+    "query": "What's happening in Brooklyn this week?",
+    "expectedIntent": "Brooklyn events, current week dates",
+    "extractedFilters": {
+      "location": "Brooklyn",
+      "dateFrom": "2026-03-30",
+      "dateTo": "2026-04-05"
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Aladdin & the Wonderful Lamp",
+      "Aladdin & the Wonderful Lamp",
+      "Brooklyn Museum Sunday Art Hang"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 33,
+    "broaderSearchTopEvents": [
+      "Newsies JR.",
+      "Aladdin & the Wonderful Lamp",
+      "Aladdin & the Wonderful Lamp"
+    ],
+    "relevanceScore": 4,
+    "completenessScore": 3,
+    "ageFitScore": 5,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "The events returned are generally relevant and age-appropriate for the user's children, especially the free egg hunts. However, there may be other suitable events in the broader database that weren't included in the results."
+  },
+  {
+    "id": 19,
+    "category": "Location-Specific",
+    "query": "Anything in the Bronx for kids?",
+    "expectedIntent": "Bronx-area family events",
+    "extractedFilters": {
+      "location": "Bronx",
+      "ageMax": 12
+    },
+    "eventsReturned": 9,
+    "topEvents": [
+      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle",
+      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle",
+      "Family Art Project: Wear a Garden"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 4,
+    "broaderSearchTopEvents": [
+      "Urban Environmental Challenge Race",
+      "Sunday Funday at Bronx Children's Museum",
+      "Zoo Explorers: Bugs and Butterflies"
+    ],
+    "relevanceScore": 4,
+    "completenessScore": 3,
+    "ageFitScore": 4,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "The events returned are largely relevant to the user's query about family activities in the Bronx, but some suitable events for Leo (3yo) were overlooked. Additionally, there's a missed opportunity as some relevant events might exist in the broader database that were not retrieved."
+  },
+  {
+    "id": 20,
+    "category": "Specific Needs",
+    "query": "Wheelchair accessible activities",
+    "expectedIntent": "Events at wheelchair-accessible venues",
+    "extractedFilters": {
+      "wheelchairAccessible": true
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Unity by Hard Rock",
+      "DSW VIP Program",
+      "American Girl® Doll Care Center - Doll Hospital"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 22,
+    "broaderSearchTopEvents": [
+      "Pickleball Community Events",
+      "CAMP New York City",
+      "It’s Our Only Earth Day 5K"
+    ],
+    "relevanceScore": 4,
+    "completenessScore": 3,
+    "ageFitScore": 4,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "The returned events largely align with the user's query for wheelchair-accessible activities and are generally age-appropriate. However, some potentially relevant events may exist in the broader database that were not included in the final results, suggesting room for improvement in filtering."
+  },
+  {
+    "id": 21,
+    "category": "Specific Needs",
+    "query": "Stroller-friendly events",
+    "expectedIntent": "Events at stroller-friendly venues",
+    "extractedFilters": {
+      "strollerFriendly": true
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Unity by Hard Rock",
+      "DSW VIP Program",
+      "American Girl® Doll Care Center - Doll Hospital"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 25,
+    "broaderSearchTopEvents": [
+      "Pickleball Community Events",
+      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle",
+      "The Very Hungry Caterpillar Interactive Show"
+    ],
+    "relevanceScore": 4,
+    "completenessScore": 4,
+    "ageFitScore": 4,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "Most of the returned events are stroller-friendly and suitable for the children's ages, but there may be other age-appropriate events available that were not included in the results. A few additional relevant events were found in the broader database search that were not returned initially."
+  },
+  {
+    "id": 22,
+    "category": "Specific Needs",
+    "query": "Bilingual Spanish events for kids",
+    "expectedIntent": "Spanish/bilingual programming for children",
+    "extractedFilters": {
+      "search": "bilingual Spanish",
+      "location": "Midtown",
+      "ageMax": 12
+    },
+    "eventsReturned": 0,
+    "topEvents": [],
+    "chatResponse": "",
+    "broaderSearchCount": 39,
+    "broaderSearchTopEvents": [
+      "Storytime with the Symphony 2026",
+      "Sunday Morning Family Jams with Musiquita",
+      "DSW VIP Program"
+    ],
+    "relevanceScore": 1,
+    "completenessScore": 1,
+    "ageFitScore": 2,
+    "diagnosis": "db_gap",
+    "judgeExplanation": "No events specifically focused on bilingual Spanish programming for children were found in the database, indicating a lack of such events in the current offerings. The relevant events retrieved do not match the user's query or provide age-appropriate options."
+  },
+  {
+    "id": 23,
+    "category": "Discovery",
+    "query": "We're bored, suggest something fun",
+    "expectedIntent": "Diverse fun options, mix of categories",
+    "extractedFilters": {},
+    "eventsReturned": 10,
+    "topEvents": [
+      "Flavor Fanatic",
+      "Join Club Applebee's®",
+      "Unity by Hard Rock"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 2,
+    "broaderSearchTopEvents": [
+      "Patterns at Lincoln Center",
+      "Antarctica! Crew Wanted"
+    ],
+    "relevanceScore": 2,
+    "completenessScore": 2,
+    "ageFitScore": 3,
+    "diagnosis": "pipeline_issue",
+    "judgeExplanation": "While some events are found, there are better options in the database, and the search did not capture relevant activities for the children’s ages and interests. The inclusion of creative and outdoor activities could greatly enhance the suggestions."
+  },
+  {
+    "id": 24,
+    "category": "Discovery",
+    "query": "Best family experience in NYC right now",
+    "expectedIntent": "Top-rated or popular current events",
+    "extractedFilters": {
+      "categories": [
+        "family"
+      ],
+      "priceMax": 50
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Unity by Hard Rock",
+      "Landry's Select Club",
+      "DSW VIP Program"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 59,
+    "broaderSearchTopEvents": [
+      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle",
+      "Complimentary Personal Shopping",
+      "Hicks Nurseries’ 36th Annual Flower & Garden Show"
+    ],
+    "relevanceScore": 4,
+    "completenessScore": 3,
+    "ageFitScore": 5,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "The returned events include several family-friendly options, but some notable relevant events like 'The Very Hungry Caterpillar Interactive Show' and 'Little Mermaid The Musical' were missed. The age fits are appropriate for both children."
+  },
+  {
+    "id": 25,
+    "category": "Discovery",
+    "query": "Something educational but fun for kids",
+    "expectedIntent": "Educational events that are engaging (museums, STEM, workshops)",
+    "extractedFilters": {
+      "categories": [
+        "science",
+        "children's activities",
+        "family"
+      ],
+      "ageMax": 10,
+      "priceMax": 50
+    },
+    "eventsReturned": 10,
+    "topEvents": [
+      "Unity by Hard Rock",
+      "Landry's Select Club",
+      "DSW VIP Program"
+    ],
+    "chatResponse": "",
+    "broaderSearchCount": 32,
+    "broaderSearchTopEvents": [
+      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle",
+      "Seal Cruise",
+      "Earth Rocks!"
+    ],
+    "relevanceScore": 4,
+    "completenessScore": 3,
+    "ageFitScore": 4,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "Most of the events returned are relevant and fun, but there are some educational events in the broader search that weren't included in the initial results. The age fit is good for Emma and Leo, but additional events could enhance the selection."
+  }
+]
