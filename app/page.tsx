@@ -24,13 +24,14 @@ interface Category {
 const PAGE_SIZE = 30;
 
 function formatDateRange(filters: FilterState): string {
+  // Append T00:00:00 to parse as local time instead of UTC midnight (avoids -1 day offset)
   if (filters.dateFrom && filters.dateTo) {
-    const from = new Date(filters.dateFrom).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const to = new Date(filters.dateTo).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const from = new Date(filters.dateFrom + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const to = new Date(filters.dateTo + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     return `${from} - ${to}`;
   }
   if (filters.dateFrom) {
-    return `From ${new Date(filters.dateFrom).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+    return `From ${new Date(filters.dateFrom + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
   }
   return 'Any date';
 }

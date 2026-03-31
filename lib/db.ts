@@ -80,7 +80,7 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
     const catConditions = filters.categories.map((cat, i) => {
       const key = `cat_${i}`;
       params[key] = `%"${cat}"%`;
-      return `(categories LIKE @${key} OR category_l1 = @cat_exact_${i})`;
+      return `(categories LIKE @${key} OR UPPER(category_l1) = UPPER(@cat_exact_${i}))`;
     });
     filters.categories.forEach((cat, i) => {
       params[`cat_exact_${i}`] = cat;
@@ -93,7 +93,7 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
       const key = `excat_${i}`;
       params[key] = `%"${cat}"%`;
       params[`excat_exact_${i}`] = cat;
-      conditions.push(`(categories NOT LIKE @${key} AND category_l1 != @excat_exact_${i})`);
+      conditions.push(`(categories NOT LIKE @${key} AND UPPER(category_l1) != UPPER(@excat_exact_${i}))`);
     });
   }
 
