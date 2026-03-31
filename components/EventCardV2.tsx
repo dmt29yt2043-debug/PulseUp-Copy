@@ -13,23 +13,56 @@ interface EventCardV2Props {
   onClick: () => void;
 }
 
-function formatDate(dateStr: string): string {
-  if (!dateStr) return '';
+/**
+ * Format date range from DB fields:
+ * - Single day or no end  → "Apr 4"
+ * - Multi-day short (≤7d) → "Apr 4 – Apr 6"
+ * - Long run (>7d)        → "Through Apr 5"
+ */
+function formatDateRange(startStr: string, endStr?: string): string {
+  if (!startStr) return '';
   try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    });
+    // Force local-time parsing (avoid UTC midnight → previous day)
+    const startDate = startStr.includes('T')
+      ? new Date(startStr)
+      : new Date(startStr + 'T00:00:00');
+
+    const fmt = (d: Date) =>
+      d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+    if (!endStr) return fmt(startDate);
+
+    const endDate = endStr.includes('T')
+      ? new Date(endStr)
+      : new Date(endStr + 'T00:00:00');
+
+    const diffDays = Math.round(
+      (endDate.getTime() - startDate.getTime()) / 86_400_000
+    );
+
+    if (diffDays <= 0) return fmt(startDate);
+    if (diffDays > 7)  return `Through ${fmt(endDate)}`;
+
+    // Same month short-form: "Apr 4–6"
+    const sameMonth =
+      startDate.getMonth() === endDate.getMonth() &&
+      startDate.getFullYear() === endDate.getFullYear();
+
+    if (sameMonth) {
+      return `${startDate.toLocaleDateString('en-US', { month: 'short' })} ${startDate.getDate()}–${endDate.getDate()}`;
+    }
+    return `${fmt(startDate)} – ${fmt(endDate)}`;
   } catch {
-    return dateStr;
+    return startStr;
   }
 }
 
 function formatPrice(event: Event): string {
   if (event.is_free) return 'FREE';
+  if (event.price_min > 0 && event.price_max > event.price_min)
+    return `$${event.price_min}–$${event.price_max}`;
   if (event.price_min > 0) return `$${event.price_min}`;
+  if (event.price_summary) return event.price_summary;
   return '';
 }
 
@@ -44,9 +77,9 @@ export default function EventCardV2({
   const [imgError, setImgError] = useState(false);
   const { isFavorite, toggle } = useFavorites();
   const liked = isFavorite(event.id);
-  const priceText = formatPrice(event);
 
-  // Border color matches the price badge: green for free, pink for paid
+  const priceText   = formatPrice(event);
+  const dateText    = formatDateRange(event.next_start_at, event.next_end_at);
   const accentColor = event.is_free ? '#22c55e' : '#e91e63';
 
   const handleLike = (e: React.MouseEvent) => {
@@ -66,7 +99,7 @@ export default function EventCardV2({
       onMouseLeave={onMouseLeave}
       onClick={onClick}
     >
-      {/* Image container */}
+      {/* ── Full-bleed image ── */}
       <div className="event-card-v2-image">
         {event.image_url && !imgError ? (
           <img
@@ -76,35 +109,40 @@ export default function EventCardV2({
             loading="lazy"
           />
         ) : (
-          <div className="event-card-v2-placeholder">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <path d="M21 15l-5-5L5 21" />
-            </svg>
-          </div>
+          <div className="event-card-v2-placeholder" />
         )}
-
-        {/* Favorite button */}
-        <button className="event-card-v2-fav" onClick={handleLike}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill={liked ? '#e91e63' : 'none'} stroke={liked ? '#e91e63' : 'white'} strokeWidth="2">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </button>
       </div>
 
-      {/* Card body */}
-      <div className="event-card-v2-body">
-        <h3 className="event-card-v2-title">{event.title}</h3>
+      {/* ── Top badges ── */}
+      {event.age_label && (
+        <span className="event-card-v2-age">{event.age_label}</span>
+      )}
+
+      {/* ── Heart ── */}
+      <button className="event-card-v2-fav" onClick={handleLike} aria-label="Save">
+        <svg width="15" height="15" viewBox="0 0 24 24"
+          fill={liked ? '#e91e63' : 'none'}
+          stroke={liked ? '#e91e63' : 'white'}
+          strokeWidth="2"
+        >
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+        </svg>
+      </button>
+
+      {/* ── Gradient overlay + text ── */}
+      <div className="event-card-v2-overlay">
+        <h3 className="event-card-v2-title">{event.short_title || event.title}</h3>
 
         {event.venue_name && (
           <p className="event-card-v2-venue">{event.venue_name}</p>
         )}
 
         <div className="event-card-v2-bottom">
-          <p className="event-card-v2-date">{formatDate(event.next_start_at)}</p>
+          <span className="event-card-v2-date">{dateText}</span>
           {priceText && (
-            <span className="event-card-v2-price">{priceText}</span>
+            <span className={`event-card-v2-price ${event.is_free ? 'free' : ''}`}>
+              {priceText}
+            </span>
           )}
         </div>
       </div>
