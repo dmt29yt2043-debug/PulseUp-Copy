@@ -9,6 +9,7 @@ import WhatFilter from '@/components/FilterDialogs/WhatFilter';
 import WhenFilter from '@/components/FilterDialogs/WhenFilter';
 import BudgetFilter from '@/components/FilterDialogs/BudgetFilter';
 import WhoFilter from '@/components/FilterDialogs/WhoFilter';
+import WhereFilter from '@/components/FilterDialogs/WhereFilter';
 import EventCardV2 from '@/components/EventCardV2';
 import FavoritesPanel from '@/components/FavoritesPanel';
 import { FavoritesProvider, useFavorites } from '@/lib/FavoritesContext';
@@ -41,6 +42,13 @@ function formatWho(filters: FilterState): string {
     return `Up to ${filters.ageMax}yo`;
   }
   return '1 Adult';
+}
+
+function formatWhere(filters: FilterState): string {
+  const nbs = filters.neighborhoods;
+  if (!nbs || nbs.length === 0 || nbs.includes('Anywhere in NYC')) return 'Anywhere';
+  if (nbs.length === 1) return nbs[0];
+  return `${nbs.length} areas`;
 }
 
 function formatBudget(filters: FilterState): string {
@@ -272,6 +280,17 @@ function HomeInner() {
     setOpenFilter(null);
   }, []);
 
+  const handleWhereApply = useCallback((neighborhoods: string[]) => {
+    setFilters((prev) => ({
+      ...prev,
+      neighborhoods: neighborhoods.length > 0 && !neighborhoods.includes('Anywhere in NYC')
+        ? neighborhoods
+        : undefined,
+    }));
+    setPage(1);
+    setOpenFilter(null);
+  }, []);
+
   // Price slider handler
   const handlePriceSliderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
@@ -431,8 +450,21 @@ function HomeInner() {
               <span className="v2-filter-item-chevron">&rsaquo;</span>
             </div>
 
+            {/* Where filter */}
+            <div className="v2-filter-item" onClick={() => setOpenFilter('where')}>
+              <div className="v2-filter-item-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+              </div>
+              <span className="v2-filter-item-label">Where</span>
+              <span className="v2-filter-item-value">{formatWhere(filters)}</span>
+              <span className="v2-filter-item-chevron">&rsaquo;</span>
+            </div>
+
             {/* Reset button */}
-            {(filters.categories || filters.priceMax !== undefined || filters.dateFrom || filters.ageMax !== undefined || filters.isFree) && (
+            {(filters.categories || filters.priceMax !== undefined || filters.dateFrom || filters.ageMax !== undefined || filters.isFree || filters.neighborhoods) && (
               <button
                 onClick={handleFilterReset}
                 className="mt-2 w-full text-center text-xs py-1.5 rounded-lg transition-colors"
@@ -572,6 +604,13 @@ function HomeInner() {
         <WhoFilter
           ageMax={filters.ageMax}
           onApply={handleWhoApply}
+          onClose={() => setOpenFilter(null)}
+        />
+      )}
+      {openFilter === 'where' && (
+        <WhereFilter
+          selected={filters.neighborhoods || []}
+          onApply={handleWhereApply}
           onClose={() => setOpenFilter(null)}
         />
       )}
