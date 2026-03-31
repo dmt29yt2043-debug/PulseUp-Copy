@@ -87,6 +87,7 @@ function HomeInner() {
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const [searchAreaActive, setSearchAreaActive] = useState(false);
   const [boundsFiltered, setBoundsFiltered] = useState(false);
+  const [mapExpanded, setMapExpanded] = useState(false);
 
   const { favoriteIds, favoriteEvents } = useFavorites();
   const [favoritesOnly, setFavoritesOnly] = useState(false);
@@ -548,7 +549,7 @@ function HomeInner() {
                     : `${total} events`}
                 </span>
               </div>
-              <div className="results-list">
+              <div className={mapExpanded ? 'results-list results-list--2col' : 'results-list'}>
                 {displayEvents.map((event) => (
                   <EventCardV2
                     key={event.id}
@@ -566,7 +567,14 @@ function HomeInner() {
         </div>
 
         {/* RIGHT: map */}
-        <div className="map-column">
+        <div className={mapExpanded ? 'map-column map-column--expanded' : 'map-column'}>
+          <button
+            className="map-expand-btn"
+            onClick={() => setMapExpanded(v => !v)}
+            title={mapExpanded ? 'Collapse map' : 'Expand map'}
+          >
+            {mapExpanded ? '›' : '‹'}
+          </button>
           <MapView
             events={displayEvents}
             hoveredItemId={hoveredItemId}
