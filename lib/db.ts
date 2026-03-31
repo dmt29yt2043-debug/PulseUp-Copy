@@ -72,7 +72,7 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
     'title NOT LIKE \'%Loyalty%\'',
     'title NOT LIKE \'%Club Baja%\'',
     'title NOT LIKE \'%Join Club%\'',
-    'category_l1 NOT IN (\'food\', \'networking\')',
+    '(category_l1 IS NULL OR category_l1 NOT IN (\'food\', \'networking\'))',
   ];
   const params: Record<string, unknown> = {};
 
