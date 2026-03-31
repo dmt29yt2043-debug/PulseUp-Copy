@@ -76,24 +76,33 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
   ];
   const params: Record<string, unknown> = {};
 
+  // DB has legacy category values — map canonical names to all known DB variants
+  const CAT_ALIASES: Record<string, string[]> = {
+    'arts': ['arts', 'Art'],
+    'family': ['family', "Children's Activities"],
+  };
+
   if (filters.categories && filters.categories.length > 0) {
     const catConditions = filters.categories.map((cat, i) => {
-      const key = `cat_${i}`;
-      params[key] = `%"${cat}"%`;
-      return `(categories LIKE @${key} OR UPPER(category_l1) = UPPER(@cat_exact_${i}))`;
-    });
-    filters.categories.forEach((cat, i) => {
-      params[`cat_exact_${i}`] = cat;
+      const aliases = CAT_ALIASES[cat] || [cat];
+      const aliasConds = aliases.map((alias, j) => {
+        params[`cat_${i}_${j}`] = `%"${alias}"%`;
+        params[`cat_exact_${i}_${j}`] = alias;
+        return `(categories LIKE @cat_${i}_${j} OR category_l1 = @cat_exact_${i}_${j})`;
+      });
+      return `(${aliasConds.join(' OR ')})`;
     });
     conditions.push(`(${catConditions.join(' OR ')})`);
   }
 
   if (filters.excludeCategories && filters.excludeCategories.length > 0) {
     filters.excludeCategories.forEach((cat, i) => {
-      const key = `excat_${i}`;
-      params[key] = `%"${cat}"%`;
-      params[`excat_exact_${i}`] = cat;
-      conditions.push(`(categories NOT LIKE @${key} AND UPPER(category_l1) != UPPER(@excat_exact_${i}))`);
+      const aliases = CAT_ALIASES[cat] || [cat];
+      aliases.forEach((alias, j) => {
+        params[`excat_${i}_${j}`] = `%"${alias}"%`;
+        params[`excat_exact_${i}_${j}`] = alias;
+        conditions.push(`(categories NOT LIKE @excat_${i}_${j} AND category_l1 != @excat_exact_${i}_${j})`);
+      });
     });
   }
 
