@@ -233,10 +233,26 @@ export function getCategories(): { value: string; label: string }[] {
     "Children's Activities": 'Family & Kids',
   };
 
-  return rows.map((row) => ({
-    value: row.category_l1,
-    label: labelMap[row.category_l1] || row.category_l1,
-  }));
+  // Preferred canonical value for each label (used when deduplicating)
+  const canonicalValue: Record<string, string> = {
+    'Family & Kids': 'family',
+    'Arts & Culture': 'arts',
+  };
+
+  const seen = new Set<string>();
+  const result: { value: string; label: string }[] = [];
+
+  for (const row of rows) {
+    if (!row.category_l1) continue; // skip empty
+    const label = labelMap[row.category_l1] || row.category_l1;
+    if (seen.has(label)) continue; // skip duplicate labels
+    seen.add(label);
+    // Use canonical value if defined, otherwise raw DB value
+    const value = canonicalValue[label] ?? row.category_l1;
+    result.push({ value, label });
+  }
+
+  return result;
 }
 
 export function getEventsForChat(query?: string): { id: number; title: string; category_l1: string; tagline: string; venue_name: string; next_start_at: string; is_free: boolean; price_summary: string; age_label: string; city: string; address: string }[] {

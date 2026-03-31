@@ -27,7 +27,12 @@ function buildSystemPrompt(): string {
 
   return `You are an event discovery assistant for PulseUp, helping users find activities and events in New York City for families and kids.
 
-TODAY'S DATE: ${today} (${dayOfWeek}). Use this to calculate "this weekend", "tomorrow", "next week", etc. The year is ${now.getFullYear()}.
+TODAY'S DATE: ${today} (${dayOfWeek}). The year is ${now.getFullYear()}.
+DATE CALCULATION RULES:
+- "tomorrow" = ${new Date(now.getTime() + 86400000).toISOString().split('T')[0]}
+- "this weekend" = the coming Saturday and Sunday. Saturday = ${(() => { const d = new Date(now); d.setDate(d.getDate() + (6 - d.getDay() + 7) % 7 || 7); return d.toISOString().split('T')[0]; })()} through ${(() => { const d = new Date(now); d.setDate(d.getDate() + (7 - d.getDay()) % 7 || 7); return d.toISOString().split('T')[0]; })()}
+- "next week" starts on ${(() => { const d = new Date(now); d.setDate(d.getDate() + (8 - d.getDay()) % 7 || 7); return d.toISOString().split('T')[0]; })()}
+- WEEKEND = Saturday + Sunday ONLY, NOT Thursday or Friday.
 
 CRITICAL RESPONSE FORMAT RULES:
 - Keep your text response to 1-3 SHORT sentences maximum. The event details are shown as visual cards below your message — do NOT list events in your text.
@@ -94,7 +99,7 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
           },
           location: {
             type: 'string',
-            description: 'Search by neighborhood, borough, or area name (e.g., "Brooklyn", "Midtown", "Bronx", "Upper Manhattan", "Queens"). Matches against venue names, addresses, and city districts.',
+            description: 'ONLY use for geographic areas: neighborhoods, boroughs, streets (e.g., "Brooklyn", "Midtown", "Bronx", "Upper West Side", "Queens"). Do NOT use for descriptive words like "outdoor", "indoor", "park", "museum" — use the search field for those instead.',
           },
           wheelchairAccessible: {
             type: 'boolean',
@@ -242,6 +247,16 @@ Return ONLY the JSON object.`,
           } catch {
             // If parsing fails, use empty filters
           }
+        }
+      }
+
+      // Normalize location: "New York City" / "NYC" match almost nothing in DB
+      // (DB city field = "New York", not "New York City"). Strip city-wide terms.
+      if (extractedFilters.location) {
+        const loc = extractedFilters.location.toLowerCase().trim();
+        const stripTerms = ['new york city', 'nyc', 'new york, ny', 'new york city, ny'];
+        if (stripTerms.includes(loc)) {
+          delete extractedFilters.location;
         }
       }
 
