@@ -25,13 +25,25 @@ function buildSystemPrompt(): string {
     categoryList = 'family, arts, theater, attractions, books, holiday, sports, music, science, film, gaming, community';
   }
 
+  // Compute date helpers
+  const tomorrow = new Date(now.getTime() + 86400000).toISOString().split('T')[0];
+  const satOffset = (6 - now.getDay() + 7) % 7 || 7;
+  const sunOffset = (7 - now.getDay()) % 7 || 7;
+  const nextMonOffset = sunOffset + 1;
+  const saturday = (() => { const d = new Date(now); d.setDate(d.getDate() + satOffset); return d.toISOString().split('T')[0]; })();
+  const sunday = (() => { const d = new Date(now); d.setDate(d.getDate() + sunOffset); return d.toISOString().split('T')[0]; })();
+  const nextMonday = (() => { const d = new Date(now); d.setDate(d.getDate() + nextMonOffset); return d.toISOString().split('T')[0]; })();
+  // "this week" ends on the coming Sunday
+  const thisWeekSunday = sunday;
+
   return `You are an event discovery assistant for PulseUp, helping users find activities and events in New York City for families and kids.
 
 TODAY'S DATE: ${today} (${dayOfWeek}). The year is ${now.getFullYear()}.
 DATE CALCULATION RULES:
-- "tomorrow" = ${new Date(now.getTime() + 86400000).toISOString().split('T')[0]}
-- "this weekend" = the coming Saturday and Sunday. Saturday = ${(() => { const d = new Date(now); d.setDate(d.getDate() + (6 - d.getDay() + 7) % 7 || 7); return d.toISOString().split('T')[0]; })()} through ${(() => { const d = new Date(now); d.setDate(d.getDate() + (7 - d.getDay()) % 7 || 7); return d.toISOString().split('T')[0]; })()}
-- "next week" starts on ${(() => { const d = new Date(now); d.setDate(d.getDate() + (8 - d.getDay()) % 7 || 7); return d.toISOString().split('T')[0]; })()}
+- "tomorrow" = ${tomorrow}
+- "this weekend" = Saturday ${saturday} through Sunday ${sunday}. Set dateFrom=${saturday}, dateTo=${sunday}.
+- "this week" = from today ${today} through Sunday ${thisWeekSunday}. Set dateFrom=${today}, dateTo=${thisWeekSunday}.
+- "next week" starts on ${nextMonday}
 - WEEKEND = Saturday + Sunday ONLY, NOT Thursday or Friday.
 
 CRITICAL RESPONSE FORMAT RULES:
@@ -45,7 +57,16 @@ When a user describes what they're looking for, ALWAYS call the extract_filters 
 
 Available categories: ${categoryList}
 
-LOCATION TIPS: When the user mentions a neighborhood or borough (Brooklyn, Midtown, Bronx, etc.), use the "location" filter. This searches venue names, addresses, and city districts.
+LOCATION / NEIGHBORHOOD RULES:
+- For borough and major area queries, ALWAYS use the "neighborhoods" array filter (NOT "location"):
+  * "in Manhattan" / "Manhattan events" → neighborhoods: ["Upper Manhattan", "Midtown", "Lower Manhattan"]
+  * "in Brooklyn" → neighborhoods: ["Brooklyn"]
+  * "in Queens" → neighborhoods: ["Queens"]
+  * "in the Bronx" → neighborhoods: ["Bronx"]
+  * "in Staten Island" → neighborhoods: ["Staten Island"]
+  * "Midtown" / "Upper West Side" / "downtown" → neighborhoods: ["Midtown"] or ["Lower Manhattan"] as appropriate
+- Use the "location" filter ONLY for specific venue names or street addresses (e.g., "near Central Park", "on 5th Ave").
+- Valid neighborhood values: "Upper Manhattan", "Midtown", "Lower Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"
 
 ACCESSIBILITY: If the user asks about wheelchair access or stroller-friendly events, use the corresponding boolean filters.`;
 }
@@ -97,9 +118,14 @@ const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
             type: 'string',
             description: 'Free-text search query for specific topics or keywords (e.g., "LEGO", "painting", "dance", "Easter")',
           },
+          neighborhoods: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Filter by NYC neighborhood/borough. Use for any mention of area/borough. Valid values: "Upper Manhattan", "Midtown", "Lower Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island". Example: "in Manhattan" → ["Upper Manhattan","Midtown","Lower Manhattan"].',
+          },
           location: {
             type: 'string',
-            description: 'ONLY use for geographic areas: neighborhoods, boroughs, streets (e.g., "Brooklyn", "Midtown", "Bronx", "Upper West Side", "Queens"). Do NOT use for descriptive words like "outdoor", "indoor", "park", "museum" — use the search field for those instead.',
+            description: 'Use ONLY for specific venue names or street addresses (e.g., "near Central Park", "on Broadway"). Do NOT use for boroughs or neighborhoods — use "neighborhoods" for those.',
           },
           wheelchairAccessible: {
             type: 'boolean',
@@ -250,12 +276,29 @@ Return ONLY the JSON object.`,
         }
       }
 
-      // Normalize location: "New York City" / "NYC" match almost nothing in DB
-      // (DB city field = "New York", not "New York City"). Strip city-wide terms.
+      // Normalize location: strip city-wide terms that match nothing in DB
       if (extractedFilters.location) {
         const loc = extractedFilters.location.toLowerCase().trim();
-        const stripTerms = ['new york city', 'nyc', 'new york, ny', 'new york city, ny'];
+        const stripTerms = ['new york city', 'nyc', 'new york, ny', 'new york city, ny', 'new york'];
         if (stripTerms.includes(loc)) {
+          delete extractedFilters.location;
+        }
+        // Convert borough names incorrectly put in location → neighborhoods
+        const boroughMap: Record<string, string[]> = {
+          'manhattan': ['Upper Manhattan', 'Midtown', 'Lower Manhattan'],
+          'brooklyn': ['Brooklyn'],
+          'queens': ['Queens'],
+          'bronx': ['Bronx'],
+          'the bronx': ['Bronx'],
+          'staten island': ['Staten Island'],
+          'midtown': ['Midtown'],
+          'upper manhattan': ['Upper Manhattan'],
+          'lower manhattan': ['Lower Manhattan'],
+          'downtown': ['Lower Manhattan'],
+          'uptown': ['Upper Manhattan'],
+        };
+        if (boroughMap[loc]) {
+          extractedFilters.neighborhoods = boroughMap[loc];
           delete extractedFilters.location;
         }
       }
@@ -306,6 +349,7 @@ Return ONLY the JSON object.`,
         message: responseText,
         filters: extractedFilters,
         events: eventsResult.events,
+        total: eventsResult.total,
       });
     }
 
@@ -318,6 +362,7 @@ Return ONLY the JSON object.`,
       message: responseText,
       filters: existingFilters || {},
       events: eventsResult.events,
+      total: eventsResult.total,
     });
   } catch (error) {
     console.error('Error in chat:', error);
