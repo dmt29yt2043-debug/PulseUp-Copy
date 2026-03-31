@@ -46,6 +46,9 @@ export default function EventCardV2({
   const liked = isFavorite(event.id);
   const priceText = formatPrice(event);
 
+  // Border color matches the price badge: green for free, pink for paid
+  const accentColor = event.is_free ? '#22c55e' : '#e91e63';
+
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
     toggle(event);
@@ -55,6 +58,10 @@ export default function EventCardV2({
     <div
       data-event-id={event.id}
       className={`event-card-v2 ${isHovered ? 'hovered' : ''} ${isSelected ? 'selected' : ''}`}
+      style={isHovered ? {
+        borderColor: accentColor,
+        boxShadow: `0 0 0 1px ${accentColor}, 0 12px 32px ${accentColor}33`,
+      } : undefined}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onClick={onClick}

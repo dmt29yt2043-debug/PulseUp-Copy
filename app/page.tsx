@@ -166,6 +166,23 @@ function HomeInner() {
     fetchEvents();
   }, [fetchEvents]);
 
+  // Scroll card into view when map pin is hovered
+  const mapHoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (hoveredItemId === null) return;
+    // Small debounce so rapid mouse movements don't thrash the scroll
+    if (mapHoverTimeoutRef.current) clearTimeout(mapHoverTimeoutRef.current);
+    mapHoverTimeoutRef.current = setTimeout(() => {
+      if (resultsRef.current) {
+        const cardEl = resultsRef.current.querySelector(`[data-event-id="${hoveredItemId}"]`);
+        if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 80);
+    return () => {
+      if (mapHoverTimeoutRef.current) clearTimeout(mapHoverTimeoutRef.current);
+    };
+  }, [hoveredItemId]);
+
   // Handlers
   const handleEventClick = useCallback((event: Event) => {
     setSelectedEvent(event);

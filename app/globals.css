@@ -467,11 +467,17 @@ body {
   flex-direction: column;
 }
 
-.event-card-v2:hover,
-.event-card-v2.hovered {
+.event-card-v2:hover {
   background: var(--bg-card-hover);
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.event-card-v2.hovered {
+  background: var(--bg-card-hover);
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  z-index: 2;
 }
 
 .event-card-v2.selected {
