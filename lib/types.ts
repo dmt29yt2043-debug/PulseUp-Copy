@@ -65,6 +65,11 @@ export interface EventData {
   tickets_available?: number;
 }
 
+export interface FilterChild {
+  age: number;
+  gender: 'boy' | 'girl' | 'other';
+}
+
 export interface FilterState {
   categories?: string[];
   excludeCategories?: string[];
@@ -72,6 +77,7 @@ export interface FilterState {
   priceMax?: number;
   isFree?: boolean;
   ageMax?: number;
+  filterChildren?: FilterChild[];
   dateFrom?: string;
   dateTo?: string;
   lat?: number;

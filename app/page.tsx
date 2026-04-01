@@ -38,10 +38,17 @@ function formatDateRange(filters: FilterState): string {
 }
 
 function formatWho(filters: FilterState): string {
+  if (filters.filterChildren && filters.filterChildren.length > 0) {
+    const parts = filters.filterChildren.map((c) => {
+      const g = c.gender === 'boy' ? '👦' : c.gender === 'girl' ? '👧' : '🧒';
+      return `${g}${c.age}`;
+    });
+    return parts.join(' ');
+  }
   if (filters.ageMax !== undefined && filters.ageMax !== null) {
     return `Up to ${filters.ageMax}yo`;
   }
-  return '1 Adult';
+  return 'Anyone';
 }
 
 function formatWhere(filters: FilterState): string {
@@ -64,8 +71,10 @@ export default function Home() {
 function HomeInner() {
   // Data state
   const [events, setEvents] = useState<Event[]>([]);
+  const [allEvents, setAllEvents] = useState<Event[]>([]);   // unfiltered feed
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [total, setTotal] = useState(0);
+  const [allTotal, setAllTotal] = useState(0);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -93,12 +102,24 @@ function HomeInner() {
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Fetch categories on mount
+  // Fetch categories on mount — API returns {value,label}, component expects {slug,label}
   useEffect(() => {
     fetch('/api/categories')
       .then((res) => res.json())
+      .then((data: { value: string; label: string }[]) => {
+        if (Array.isArray(data))
+          setCategories(data.map((c) => ({ slug: c.value, label: c.label })));
+      })
+      .catch(console.error);
+  }, []);
+
+  // Fetch all events (no filters) for Feed tab
+  useEffect(() => {
+    fetch('/api/events?page=1&page_size=500')
+      .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) setCategories(data);
+        setAllEvents(data.events || []);
+        setAllTotal(data.total || 0);
       })
       .catch(console.error);
   }, []);
@@ -200,11 +221,13 @@ function HomeInner() {
     setFilters({});
     setPage(1);
     setPriceSlider(850);
+    setActiveTab('feed');
   }, []);
 
   const handleFiltersFromChat = useCallback((newFilters: FilterState) => {
     setFilters(newFilters);
     setPage(1);
+    setActiveTab('foryou');
   }, []);
 
   // Discovery handlers
@@ -289,12 +312,14 @@ function HomeInner() {
     []
   );
 
-  const handleWhoApply = useCallback((ageMax?: number) => {
+  const handleWhoApply = useCallback((ageMax?: number, filterChildren?: import('@/lib/types').FilterChild[]) => {
     setFilters((prev) => ({
       ...prev,
       ageMax,
+      filterChildren,
     }));
     setPage(1);
+    if (ageMax !== undefined) setActiveTab('foryou');
     setOpenFilter(null);
   }, []);
 
@@ -323,8 +348,10 @@ function HomeInner() {
     setPage(1);
   }, [priceSlider]);
 
-  const baseEvents = boundsFiltered ? filteredEvents : events;
+  const forYouEvents = boundsFiltered ? filteredEvents : events;
+  const baseEvents = activeTab === 'feed' ? allEvents : forYouEvents;
   const displayEvents = favoritesOnly ? favoriteEvents : baseEvents;
+  const displayTotal  = favoritesOnly ? favoriteIds.size : activeTab === 'feed' ? allTotal : total;
 
   const sliderPct = Math.round((priceSlider / 850) * 100);
 
@@ -348,25 +375,19 @@ function HomeInner() {
               className={`v2-header-tab ${activeTab === 'feed' ? 'active' : ''}`}
               onClick={() => setActiveTab('feed')}
             >
-              Feed ({total})
+              Feed ({allTotal})
             </button>
             <button
               className={`v2-header-tab ${activeTab === 'foryou' ? 'active' : ''}`}
               onClick={() => setActiveTab('foryou')}
             >
-              For you
+              For you ({total})
             </button>
           </div>
         </div>
 
         {/* Right icons */}
         <div className="v2-header-right">
-          <button className="v2-header-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-          </button>
           <button
             className="v2-header-icon"
             onClick={() => setFavoritesOnly((v) => !v)}
@@ -546,7 +567,7 @@ function HomeInner() {
                     ? `${favoriteIds.size} saved events`
                     : boundsFiltered
                     ? `${displayEvents.length} events in this area`
-                    : `${total} events`}
+                    : `${displayTotal} events`}
                 </span>
               </div>
               <div className={mapExpanded ? 'results-list results-list--2col' : 'results-list'}>
@@ -628,6 +649,7 @@ function HomeInner() {
       {openFilter === 'who' && (
         <WhoFilter
           ageMax={filters.ageMax}
+          children={filters.filterChildren}
           onApply={handleWhoApply}
           onClose={() => setOpenFilter(null)}
         />

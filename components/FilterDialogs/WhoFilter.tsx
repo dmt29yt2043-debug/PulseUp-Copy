@@ -2,41 +2,127 @@
 
 import { useState } from 'react';
 
+interface Child {
+  age: number;
+  gender: 'boy' | 'girl' | 'other';
+}
+
 interface WhoFilterProps {
   ageMax?: number;
-  onApply: (ageMax?: number) => void;
+  children?: Child[];
+  onApply: (ageMax?: number, children?: Child[]) => void;
   onClose: () => void;
 }
 
-export default function WhoFilter({ ageMax: initialAge, onApply, onClose }: WhoFilterProps) {
-  const [age, setAge] = useState<string>(initialAge !== undefined ? String(initialAge) : '');
+const GENDER_LABELS: Record<Child['gender'], string> = {
+  boy: '👦 Boy',
+  girl: '👧 Girl',
+  other: '🧒 Other',
+};
+
+export default function WhoFilter({ ageMax: initialAge, children: initialChildren, onApply, onClose }: WhoFilterProps) {
+  const [children, setChildren] = useState<Child[]>(
+    initialChildren && initialChildren.length > 0
+      ? initialChildren
+      : initialAge !== undefined
+        ? [{ age: initialAge, gender: 'other' }]
+        : []
+  );
+
+  const addChild = () => setChildren((prev) => [...prev, { age: 5, gender: 'other' }]);
+
+  const removeChild = (i: number) => setChildren((prev) => prev.filter((_, idx) => idx !== i));
+
+  const updateAge = (i: number, delta: number) =>
+    setChildren((prev) =>
+      prev.map((c, idx) =>
+        idx === i ? { ...c, age: Math.max(0, Math.min(18, c.age + delta)) } : c
+      )
+    );
+
+  const setGender = (i: number, gender: Child['gender']) =>
+    setChildren((prev) => prev.map((c, idx) => (idx === i ? { ...c, gender } : c)));
 
   const handleApply = () => {
-    onApply(age ? parseInt(age, 10) : undefined);
+    const ageMax = children.length > 0 ? Math.max(...children.map((c) => c.age)) : undefined;
+    onApply(ageMax, children);
   };
 
-  const handleClear = () => {
-    setAge('');
-  };
+  const handleClear = () => setChildren([]);
 
   return (
     <div className="filter-dialog-backdrop" onClick={onClose}>
-      <div className="filter-dialog" onClick={(e) => e.stopPropagation()}>
+      <div className="filter-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
         <h3 className="text-lg font-semibold mb-4 text-white">Who is going?</h3>
 
-        <div className="mb-6">
-          <label className="block text-sm text-gray-400 mb-1">Child age</label>
-          <input
-            type="number"
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-            placeholder="e.g. 5"
-            min="0"
-            max="18"
-            className="w-full px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg text-sm focus:outline-none focus:border-[#e91e63] bg-[#16143a] text-white placeholder-gray-500"
-          />
-          <p className="text-xs text-gray-500 mt-1">Filter events appropriate for this age</p>
+        {/* Children list */}
+        <div className="space-y-3 mb-4">
+          {children.map((child, i) => (
+            <div key={i} style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px 14px' }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-300 font-medium">Child {i + 1}</span>
+                <button
+                  onClick={() => removeChild(i)}
+                  className="text-gray-500 hover:text-red-400 text-lg leading-none"
+                  title="Remove"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Age stepper */}
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-xs text-gray-500 w-8">Age</span>
+                <button
+                  onClick={() => updateAge(i, -1)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-white"
+                  style={{ background: 'rgba(255,255,255,0.08)' }}
+                >
+                  −
+                </button>
+                <span className="text-white font-semibold w-6 text-center">{child.age}</span>
+                <button
+                  onClick={() => updateAge(i, 1)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-white"
+                  style={{ background: 'rgba(255,255,255,0.08)' }}
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Gender */}
+              <div className="flex gap-2">
+                {(['boy', 'girl', 'other'] as Child['gender'][]).map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setGender(i, g)}
+                    className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all"
+                    style={{
+                      background: child.gender === g ? '#e91e63' : 'rgba(255,255,255,0.06)',
+                      color: child.gender === g ? 'white' : '#9ca3af',
+                      border: child.gender === g ? '1.5px solid #e91e63' : '1.5px solid rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    {GENDER_LABELS[g]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
+
+        {/* Add child button */}
+        <button
+          onClick={addChild}
+          className="w-full py-2 mb-5 rounded-lg text-sm font-medium text-pink-400 hover:text-white transition-colors"
+          style={{ border: '1.5px dashed rgba(233,30,99,0.5)', background: 'transparent' }}
+        >
+          + Add child
+        </button>
+
+        {children.length === 0 && (
+          <p className="text-xs text-gray-500 mb-4 text-center">Add children to filter events by age</p>
+        )}
 
         <div className="flex gap-3">
           <button
