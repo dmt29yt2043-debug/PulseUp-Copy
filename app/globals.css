@@ -647,6 +647,11 @@ body {
   flex: 0 0 680px !important;
 }
 
+/* Smooth transition on map resize */
+.map-column {
+  transition: flex-basis 0.3s ease !important;
+}
+
 /* Expand/collapse button on the map */
 .map-expand-btn {
   position: absolute;
@@ -751,6 +756,15 @@ body {
 
   .map-column {
     flex: 0 0 400px !important;
+  }
+
+  .map-column--expanded {
+    flex: 0 0 800px !important;
+  }
+
+  /* On wide screens, 2-col when expanded */
+  .results-list--2col {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 }
 
