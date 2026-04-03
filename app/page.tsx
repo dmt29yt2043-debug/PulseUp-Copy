@@ -84,7 +84,13 @@ function HomeInner() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [openFilter, setOpenFilter] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'feed' | 'foryou'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'foryou'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('source') === 'quiz') return 'foryou';
+    }
+    return 'feed';
+  });
   const [favoritesOpen, setFavoritesOpen] = useState(false);
 
   // Price range slider

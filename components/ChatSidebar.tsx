@@ -38,6 +38,29 @@ const INTEREST_TO_CATEGORIES: Record<string, string[]> = {
   'Social': ['family'],
 };
 
+// Quiz interests → API categories
+const QUIZ_INTEREST_TO_CATEGORIES: Record<string, string[]> = {
+  outdoor: ['attractions'],
+  museums: ['arts', 'Art'],
+  playgrounds: ['family', "Children's Activities"],
+  classes: ['arts', 'Art'],
+  indoor_play: ['family', "Children's Activities"],
+  science: ['books', "Children's Activities"],
+  arts_crafts: ['arts', 'Art'],
+  sports: ['sports'],
+  theater: ['theater'],
+  music: ['arts'],
+  play: ['family', "Children's Activities"],
+};
+
+const BOROUGH_TO_NEIGHBORHOODS: Record<string, string[]> = {
+  manhattan: ['Upper Manhattan', 'Midtown', 'Lower Manhattan'],
+  brooklyn: ['Brooklyn'],
+  queens: ['Queens'],
+  bronx: ['Bronx'],
+  'staten island': ['Staten Island'],
+};
+
 function genderEmoji(gender: string): string {
   return gender === 'girl' ? '\uD83D\uDC67' : gender === 'boy' ? '\uD83D\uDC66' : '\uD83E\uDDD2';
 }
@@ -116,8 +139,64 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
     onFiltersChange(newFilters);
   }, [onFiltersChange]);
 
-  // On mount
+  // On mount — check for quiz params first, then fallback to stored profile
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const source = params.get('source');
+
+      if (source === 'quiz') {
+        const childAge = params.get('child_age') || '6-8';
+        const borough = (params.get('borough') || '').toLowerCase();
+        const interests = (params.get('interests') || '').split(',').map(s => s.trim()).filter(Boolean);
+        const pain = params.get('pain') || '';
+
+        // Parse age range → ageMax
+        const ageParts = childAge.replace('+', '-18').split('-').map(Number);
+        const ageMax = ageParts[ageParts.length - 1] || 8;
+
+        // Map quiz interests → API categories
+        const cats = new Set<string>();
+        interests.forEach(i => {
+          (QUIZ_INTEREST_TO_CATEGORIES[i.toLowerCase()] || []).forEach(c => cats.add(c));
+        });
+
+        // Map borough → neighborhoods
+        const neighborhoods = BOROUGH_TO_NEIGHBORHOODS[borough] || [];
+
+        // Build filters
+        const newFilters: FilterState = { ageMax };
+        if (cats.size > 0) newFilters.categories = [...cats];
+        if (neighborhoods.length > 0) newFilters.neighborhoods = neighborhoods;
+        if (pain === 'too_expensive') newFilters.isFree = true;
+
+        // Build profile & store
+        const interestLabels = interests.map(i => i.charAt(0).toUpperCase() + i.slice(1));
+        const child: ChildProfile = { age: ageMax, gender: 'unknown', interests: interestLabels };
+        const quizProfile: UserProfile = {
+          children: [child],
+          neighborhoods,
+          budget: pain === 'too_expensive' ? 'Free only' : 'Any budget',
+        };
+        setProfile(quizProfile);
+        storeProfile(quizProfile);
+        setOnboardingDone(true);
+        setOnboardingStep('done');
+        onFiltersChange(newFilters);
+
+        // Chat message
+        const boroughLabel = borough.charAt(0).toUpperCase() + borough.slice(1);
+        setMessages([{
+          role: 'assistant',
+          content: `Great picks for your family! Here's what I found:\n\n\uD83D\uDC76 Kids age ${childAge}\n\uD83D\uDCCD ${boroughLabel}\n\u2B50 ${interestLabels.join(', ')}\n\nI've filtered the best events for you. Feel free to ask me anything to refine!`,
+        }]);
+
+        // Clean URL without reload
+        window.history.replaceState({}, '', '/');
+        return;
+      }
+    }
+
     const stored = getStoredProfile();
     if (stored) {
       setProfile(stored);
