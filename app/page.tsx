@@ -84,13 +84,15 @@ function HomeInner() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [openFilter, setOpenFilter] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'feed' | 'foryou'>(() => {
+  const [activeTab, setActiveTab] = useState<'feed' | 'foryou'>('feed');
+
+  // Auto-switch to "For you" tab when arriving from quiz
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('source') === 'quiz') return 'foryou';
+      if (params.get('source') === 'quiz') setActiveTab('foryou');
     }
-    return 'feed';
-  });
+  }, []);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
 
   // Price range slider
