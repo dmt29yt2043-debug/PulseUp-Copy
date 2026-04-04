@@ -103,26 +103,8 @@ function OverviewTab({ event }: { event: Event }) {
   );
 }
 
-function GoodToKnowItem({ label, text }: { label: string; text: string }) {
-  const [expanded, setExpanded] = useState(false);
-  const preview = text.length > 80 ? text.slice(0, 80) + '...' : text;
-
-  return (
-    <div className="ed-gtk-item">
-      <div className="ed-gtk-header">
-        <span className="ed-gtk-label">{label}</span>
-        {text.length > 80 && (
-          <button className="ed-gtk-more" onClick={() => setExpanded(!expanded)}>
-            {expanded ? 'LESS' : 'SHOW MORE'} ›
-          </button>
-        )}
-      </div>
-      <p className="ed-gtk-text">{expanded ? text : preview}</p>
-    </div>
-  );
-}
-
 function GoodToKnowTab({ event }: { event: Event }) {
+  const [expanded, setExpanded] = useState(false);
   const d = event.derisk;
   if (!d) return <p className="ed-empty">No additional info available.</p>;
 
@@ -140,14 +122,26 @@ function GoodToKnowTab({ event }: { event: Event }) {
 
   if (sections.length === 0) return <p className="ed-empty">No additional info available.</p>;
 
+  const PREVIEW_COUNT = 3;
+  const visible = expanded ? sections : sections.slice(0, PREVIEW_COUNT);
+  const hasMore = sections.length > PREVIEW_COUNT;
+
   return (
     <div className="ed-tab-content">
       <h3 className="ed-section-title">Good to know</h3>
       <div className="ed-gtk-list">
-        {sections.map((s) => (
-          <GoodToKnowItem key={s.label} label={s.label} text={s.value} />
+        {visible.map((s) => (
+          <div key={s.label} className="ed-gtk-item">
+            <span className="ed-gtk-label">{s.label}</span>
+            <p className="ed-gtk-text">{s.value}</p>
+          </div>
         ))}
       </div>
+      {hasMore && (
+        <button className="ed-gtk-readmore" onClick={() => setExpanded(!expanded)}>
+          {expanded ? 'Show less' : `Read more (${sections.length - PREVIEW_COUNT} more)`}
+        </button>
+      )}
     </div>
   );
 }
