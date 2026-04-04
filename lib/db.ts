@@ -28,7 +28,17 @@ function parseJsonField<T>(value: string | null | undefined, fallback: T): T {
   try {
     return JSON.parse(value) as T;
   } catch {
-    return fallback;
+    // Handle Python-style dicts/lists with single quotes
+    try {
+      const fixed = value
+        .replace(/'/g, '"')
+        .replace(/\bNone\b/g, 'null')
+        .replace(/\bTrue\b/g, 'true')
+        .replace(/\bFalse\b/g, 'false');
+      return JSON.parse(fixed) as T;
+    } catch {
+      return fallback;
+    }
   }
 }
 
