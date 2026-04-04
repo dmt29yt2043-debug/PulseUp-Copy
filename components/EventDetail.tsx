@@ -196,12 +196,12 @@ function MiniMap({ lat, lon }: { lat: number; lon: number }) {
       const map = L.map(containerRef.current, {
         center: [lat, lon],
         zoom: 15,
-        zoomControl: false,
+        zoomControl: true,
         attributionControl: false,
-        dragging: false,
-        scrollWheelZoom: false,
-        doubleClickZoom: false,
-        touchZoom: false,
+        dragging: true,
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        touchZoom: true,
       });
 
       L.tileLayer(tileUrl, { maxZoom: 18 }).addTo(map);
