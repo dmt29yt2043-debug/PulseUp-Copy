@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Event } from '@/lib/types';
 import { useFavorites } from '@/lib/FavoritesContext';
 
@@ -9,8 +9,6 @@ interface EventDetailProps {
   open: boolean;
   onClose: () => void;
 }
-
-type DetailTab = 'overview' | 'good_to_know' | 'reviews' | 'location';
 
 /* ── helpers ── */
 
@@ -280,30 +278,21 @@ function LocationTab({ event }: { event: Event }) {
 
 export default function EventDetail({ event, open, onClose }: EventDetailProps) {
   const [imgError, setImgError] = useState(false);
-  const [activeTab, setActiveTab] = useState<DetailTab>('overview');
   const { isFavorite, toggle } = useFavorites();
   const liked = event ? isFavorite(event.id) : false;
 
-  // Count available tabs
-  const tabs = useMemo<{ key: DetailTab; label: string }[]>(() => {
-    const t: { key: DetailTab; label: string }[] = [{ key: 'overview', label: 'Overview' }];
-    if (event?.derisk && Object.values(event.derisk).some(Boolean)) {
-      t.push({ key: 'good_to_know', label: 'Good to know' });
-    }
-    t.push({ key: 'reviews', label: 'Reviews' });
-    t.push({ key: 'location', label: 'Location' });
-    return t;
-  }, [event]);
-
-  // Reset tab when event changes
+  // Reset image error when event changes
   const [prevId, setPrevId] = useState<number | null>(null);
   if (event && event.id !== prevId) {
     setPrevId(event.id);
-    setActiveTab('overview');
     setImgError(false);
   }
 
   if (!event) return null;
+
+  const hasGoodToKnow = event.derisk && Object.values(event.derisk).some(Boolean);
+  const hasReviews = event.reviews && event.reviews.length > 0;
+  const hasLocation = event.venue_name || event.address || (event.lat != null && event.lon != null);
 
   return (
     <>
@@ -370,25 +359,30 @@ export default function EventDetail({ event, open, onClose }: EventDetailProps) 
         {/* ── Metadata bar ── */}
         <MetaBar event={event} />
 
-        {/* ── Tabs ── */}
-        <div className="ed-tabs">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              className={`ed-tab ${activeTab === tab.key ? 'ed-tab-active' : ''}`}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* ── Tab content ── */}
+        {/* ── All sections in single scroll ── */}
         <div className="ed-content">
-          {activeTab === 'overview' && <OverviewTab event={event} />}
-          {activeTab === 'good_to_know' && <GoodToKnowTab event={event} />}
-          {activeTab === 'reviews' && <ReviewsTab event={event} />}
-          {activeTab === 'location' && <LocationTab event={event} />}
+          <OverviewTab event={event} />
+
+          {hasGoodToKnow && (
+            <>
+              <div className="ed-divider" />
+              <GoodToKnowTab event={event} />
+            </>
+          )}
+
+          {hasReviews && (
+            <>
+              <div className="ed-divider" />
+              <ReviewsTab event={event} />
+            </>
+          )}
+
+          {hasLocation && (
+            <>
+              <div className="ed-divider" />
+              <LocationTab event={event} />
+            </>
+          )}
         </div>
 
         {/* ── Buy ticket ── */}
