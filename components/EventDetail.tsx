@@ -153,9 +153,7 @@ function GoodToKnowTab({ event }: { event: Event }) {
 }
 
 function ReviewsTab({ event }: { event: Event }) {
-  if (!event.reviews || event.reviews.length === 0) {
-    return <p className="ed-empty">No reviews yet.</p>;
-  }
+  const filledReviews = (event.reviews || []).filter(r => r.text && r.text.trim());
 
   return (
     <div className="ed-tab-content">
@@ -165,14 +163,18 @@ function ReviewsTab({ event }: { event: Event }) {
           <span className="ed-rating-inline"> ★ {event.rating_avg.toFixed(1)}</span>
         )}
       </h3>
-      <div className="ed-reviews-list">
-        {event.reviews.map((review, i) => (
-          <div key={i} className="ed-review-card">
-            <p className="ed-review-text">&ldquo;{review.text}&rdquo;</p>
-            {review.source && <p className="ed-review-source">{review.source}</p>}
-          </div>
-        ))}
-      </div>
+      {filledReviews.length > 0 ? (
+        <div className="ed-reviews-list">
+          {filledReviews.map((review, i) => (
+            <div key={i} className="ed-review-card">
+              <p className="ed-review-text">&ldquo;{review.text}&rdquo;</p>
+              {review.source && <p className="ed-review-source">{review.source}</p>}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="ed-body" style={{ opacity: 0.5 }}>No written reviews yet.</p>
+      )}
     </div>
   );
 }
@@ -291,7 +293,7 @@ export default function EventDetail({ event, open, onClose }: EventDetailProps) 
   if (!event) return null;
 
   const hasGoodToKnow = event.derisk && Object.values(event.derisk).some(Boolean);
-  const hasReviews = event.reviews && event.reviews.length > 0;
+  const hasReviews = event.rating_avg > 0;
   const hasLocation = event.venue_name || event.address || (event.lat != null && event.lon != null);
 
   return (
