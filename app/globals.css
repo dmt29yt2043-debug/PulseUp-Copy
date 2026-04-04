@@ -1295,26 +1295,18 @@ body {
 .ed-loc-icon { width: 20px; text-align: center; font-size: 0.85rem; flex-shrink: 0; }
 .ed-loc-value { font-size: 0.85rem; color: rgba(255,255,255,0.65); }
 
-/* Mini map */
+/* Mini map (Leaflet) */
 .ed-minimap {
   border-radius: 12px;
   overflow: hidden;
   position: relative;
   background: #1b123d;
+  height: 220px;
 }
-.ed-minimap-img { width: 100%; display: block; min-height: 180px; object-fit: cover; }
-.ed-minimap-pin {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -100%);
-  width: 24px;
-  height: 24px;
-  background: #ff8d89;
-  border-radius: 50% 50% 50% 0;
-  transform: translate(-50%, -100%) rotate(-45deg);
-  box-shadow: 0 4px 12px rgba(255,141,137,0.4);
+.ed-minimap .leaflet-container {
+  background: #1b123d;
 }
+.ed-map-pin { background: transparent !important; border: none !important; }
 
 /* CTA button */
 .ed-cta-wrap {

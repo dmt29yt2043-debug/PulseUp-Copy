@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type { Event } from '@/lib/types';
 import { useFavorites } from '@/lib/FavoritesContext';
 
@@ -179,6 +179,61 @@ function ReviewsTab({ event }: { event: Event }) {
   );
 }
 
+function MiniMap({ lat, lon }: { lat: number; lon: number }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
+
+    import('leaflet').then((L) => {
+      if (!containerRef.current || mapRef.current) return;
+
+      const TOMTOM_KEY = process.env.NEXT_PUBLIC_TOMTOM_API_KEY || 'l9WXwQeiaM0XOFjaLMv1LMOZxKSK60Jf';
+      const tileUrl = `https://api.tomtom.com/map/1/tile/basic/main/{z}/{x}/{y}.png?key=${TOMTOM_KEY}`;
+
+      const map = L.map(containerRef.current, {
+        center: [lat, lon],
+        zoom: 15,
+        zoomControl: false,
+        attributionControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        touchZoom: false,
+      });
+
+      L.tileLayer(tileUrl, { maxZoom: 18 }).addTo(map);
+
+      const icon = L.divIcon({
+        className: 'ed-map-pin',
+        html: `<div style="
+          width:16px;height:16px;
+          background:#ff7573;
+          border-radius:50%;
+          border:3px solid white;
+          box-shadow:0 2px 8px rgba(255,117,115,0.5);
+        "></div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+      });
+
+      L.marker([lat, lon], { icon, interactive: false }).addTo(map);
+      mapRef.current = map;
+    });
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, [lat, lon]);
+
+  return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
+}
+
 function LocationTab({ event }: { event: Event }) {
   const hasCoords = event.lat != null && event.lon != null;
 
@@ -211,19 +266,10 @@ function LocationTab({ event }: { event: Event }) {
         )}
       </div>
 
-      {/* Mini map */}
+      {/* Interactive mini map */}
       {hasCoords && (
         <div className="ed-minimap">
-          <img
-            src={`https://api.tomtom.com/map/1/staticimage?layer=basic&style=night&format=png&zoom=15&center=${event.lon},${event.lat}&width=440&height=260&key=AazPA2VhMEk25KTIGOQ4Y5m84sZ8FhJC`}
-            alt="Map"
-            className="ed-minimap-img"
-            onError={(e) => {
-              // Fallback: OpenStreetMap static
-              (e.target as HTMLImageElement).src = `https://staticmap.openstreetmap.de/staticmap.php?center=${event.lat},${event.lon}&zoom=15&size=440x260&markers=${event.lat},${event.lon},red-pushpin`;
-            }}
-          />
-          <div className="ed-minimap-pin" />
+          <MiniMap lat={event.lat!} lon={event.lon!} />
         </div>
       )}
     </div>
