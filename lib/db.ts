@@ -75,7 +75,7 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
 } {
   const db = getDb();
   const conditions: string[] = [
-    'status = \'published\'',
+    'status IN (\'published\', \'done\', \'new\')',
     // Exclude rewards/loyalty/club programs — not real events
     'title NOT LIKE \'%Rewards%\'',
     'title NOT LIKE \'%Royalty%\'',
@@ -277,7 +277,7 @@ export function getCategories(): { value: string; label: string }[] {
 export function getEventsForChat(query?: string): { id: number; title: string; category_l1: string; tagline: string; venue_name: string; next_start_at: string; is_free: boolean; price_summary: string; age_label: string; city: string; address: string }[] {
   const db = getDb();
 
-  const baseWhere = `status = 'published' AND title NOT LIKE '%Rewards%' AND title NOT LIKE '%Royalty%' AND title NOT LIKE '%Loyalty%' AND title NOT LIKE '%Club Baja%' AND title NOT LIKE '%Join Club%' AND (category_l1 IS NULL OR category_l1 NOT IN ('food', 'networking'))`;
+  const baseWhere = `status IN ('published', 'done', 'new') AND title NOT LIKE '%Rewards%' AND title NOT LIKE '%Royalty%' AND title NOT LIKE '%Loyalty%' AND title NOT LIKE '%Club Baja%' AND title NOT LIKE '%Join Club%' AND (category_l1 IS NULL OR category_l1 NOT IN ('food', 'networking'))`;
   const fields = `id, title, category_l1, tagline, venue_name, next_start_at, is_free, price_summary, age_label, city, address`;
 
   let searchWhere = '';
