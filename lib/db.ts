@@ -148,7 +148,7 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
 
   if (filters.search) {
     params.search = `%${filters.search}%`;
-    conditions.push('(title LIKE @search OR description LIKE @search OR tagline LIKE @search OR tags LIKE @search)');
+    conditions.push('(title LIKE @search OR description LIKE @search OR tagline LIKE @search OR tags LIKE @search OR category_l1 LIKE @search OR venue_name LIKE @search)');
   }
 
   // Fix 2: Location text search (venue, address, city, district)
@@ -238,7 +238,7 @@ export function getEventById(id: number): Event | null {
 
 export function getCategories(): { value: string; label: string }[] {
   const db = getDb();
-  const rows = db.prepare('SELECT DISTINCT category_l1 FROM events WHERE category_l1 IS NOT NULL AND status = \'published\' ORDER BY category_l1').all() as { category_l1: string }[];
+  const rows = db.prepare('SELECT DISTINCT category_l1 FROM events WHERE category_l1 IS NOT NULL AND status IN (\'published\', \'done\', \'new\') ORDER BY category_l1').all() as { category_l1: string }[];
 
   const labelMap: Record<string, string> = {
     family: 'Family & Kids',
