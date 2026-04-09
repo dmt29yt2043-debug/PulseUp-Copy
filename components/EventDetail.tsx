@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Event } from '@/lib/types';
 import { useFavorites } from '@/lib/FavoritesContext';
+import { track } from '@/lib/analytics';
 
 interface EventDetailProps {
   event: Event | null;
@@ -48,7 +49,6 @@ function MetaBar({ event }: { event: Event }) {
   const cols = [
     { label: 'DATE', value: formatDateShort(event.next_start_at) },
     { label: 'START TIME', value: formatTime(event.next_start_at) },
-    { label: 'VENUE', value: event.venue_name || '—' },
     { label: 'AGE GROUP', value: event.age_label || 'All Ages' },
     { label: 'PRICE', value: priceLabel(event) },
   ];
@@ -88,17 +88,7 @@ function OverviewTab({ event }: { event: Event }) {
         </div>
       )}
 
-      {/* Accessibility info */}
-      {(event.data?.venue_stroller_friendly || event.data?.venue_wheelchair_accessible) && (
-        <div className="ed-access-info">
-          {event.data.venue_wheelchair_accessible && (
-            <span className="ed-access-badge">♿ Wheelchair accessible</span>
-          )}
-          {event.data.venue_stroller_friendly && (
-            <span className="ed-access-badge">🍼 Stroller friendly</span>
-          )}
-        </div>
-      )}
+      {/* Accessibility info moved to ed-quick-info above */}
     </div>
   );
 }
@@ -303,7 +293,7 @@ export default function EventDetail({ event, open, onClose }: EventDetailProps) 
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
           <div className="ed-topbar-right">
-            <button className="ed-topbar-btn" aria-label="Share" onClick={() => navigator.share?.({ title: event.title, url: event.source_url || window.location.href }).catch(() => {})}>
+            <button className="ed-topbar-btn" aria-label="Share" onClick={() => { track('share_clicked', { event_id: event.id, event_title: event.title }); navigator.share?.({ title: event.title, url: event.source_url || window.location.href }).catch(() => {}); }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             </button>
             <button
@@ -355,6 +345,36 @@ export default function EventDetail({ event, open, onClose }: EventDetailProps) 
         {/* ── Metadata bar ── */}
         <MetaBar event={event} />
 
+        {/* ── Quick info: address, subway, quick facts ── */}
+        {(event.address || event.subway || event.venue_name) && (
+          <div className="ed-quick-info">
+            {event.venue_name && (
+              <div className="ed-qi-row">
+                <span className="ed-qi-icon">📍</span>
+                <span className="ed-qi-text">{event.venue_name}</span>
+              </div>
+            )}
+            {event.address && (
+              <div className="ed-qi-row">
+                <span className="ed-qi-icon">🏠</span>
+                <span className="ed-qi-text">{event.address}{event.city ? `, ${event.city}` : ''}</span>
+              </div>
+            )}
+            {event.subway && (
+              <div className="ed-qi-row">
+                <span className="ed-qi-icon">🚇</span>
+                <span className="ed-qi-text">{event.subway}</span>
+              </div>
+            )}
+            {(event.data?.venue_stroller_friendly || event.data?.venue_wheelchair_accessible) && (
+              <div className="ed-qi-badges">
+                {event.data.venue_wheelchair_accessible && <span className="ed-qi-badge">♿ Wheelchair accessible</span>}
+                {event.data.venue_stroller_friendly && <span className="ed-qi-badge">🍼 Stroller friendly</span>}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── All sections in single scroll ── */}
         <div className="ed-content">
           <OverviewTab event={event} />
@@ -389,6 +409,11 @@ export default function EventDetail({ event, open, onClose }: EventDetailProps) 
               target="_blank"
               rel="noopener noreferrer"
               className="ed-cta"
+              onClick={() => {
+                track('buy_clicked', { event_id: event.id, event_title: event.title, button_type: 'buy_tickets', destination_url: event.source_url });
+                track('ticket_link_clicked', { event_id: event.id, destination_url: event.source_url });
+                track('external_link_clicked', { destination_url: event.source_url, source: 'event_detail' });
+              }}
             >
               Buy ticket
             </a>

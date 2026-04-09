@@ -83,6 +83,8 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
     'title NOT LIKE \'%Club Baja%\'',
     'title NOT LIKE \'%Join Club%\'',
     '(category_l1 IS NULL OR category_l1 NOT IN (\'food\', \'networking\'))',
+    // Hide past events: keep if it hasn't ended yet (or, if no end time, hasn't started > 1 day ago)
+    "(COALESCE(next_end_at, datetime(next_start_at, '+1 day')) >= datetime('now') OR next_start_at IS NULL)",
   ];
   const params: Record<string, unknown> = {};
 
@@ -165,9 +167,10 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
     conditions.push("data LIKE '%\"venue_stroller_friendly\": true%' OR data LIKE '%\"venue_stroller_friendly\":true%'");
   }
 
-  // Neighborhood bounding-box filter
+  // Neighborhood filter: bounding-box for events with coordinates + text fallback for events without
   if (filters.neighborhoods && filters.neighborhoods.length > 0 && !filters.neighborhoods.includes('Anywhere in NYC')) {
     const nbConds: string[] = [];
+    const textConds: string[] = [];
     filters.neighborhoods.forEach((nb, i) => {
       const bounds = NEIGHBORHOOD_BOUNDS[nb];
       if (bounds) {
@@ -177,10 +180,16 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
         params[`nb_lonmax_${i}`] = bounds.lonMax;
         nbConds.push(`(lat BETWEEN @nb_latmin_${i} AND @nb_latmax_${i} AND lon BETWEEN @nb_lonmin_${i} AND @nb_lonmax_${i})`);
       }
+      // Text fallback: match city, address, or venue_name
+      params[`nb_text_${i}`] = `%${nb}%`;
+      textConds.push(`(city LIKE @nb_text_${i} OR address LIKE @nb_text_${i} OR venue_name LIKE @nb_text_${i})`);
     });
-    if (nbConds.length > 0) {
-      conditions.push(`lat IS NOT NULL AND lon IS NOT NULL AND (${nbConds.join(' OR ')})`);
-    }
+    const geoCond = nbConds.length > 0
+      ? `(lat IS NOT NULL AND lon IS NOT NULL AND (${nbConds.join(' OR ')}))`
+      : '';
+    const txtCond = textConds.length > 0 ? `(${textConds.join(' OR ')})` : '';
+    const combined = [geoCond, txtCond].filter(Boolean).join(' OR ');
+    if (combined) conditions.push(`(${combined})`);
   }
 
   let distanceSelect = '';
@@ -223,9 +232,18 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
   const dataSql = `SELECT *${distanceSelect} FROM events WHERE ${whereClause} ${distanceCondition} ${orderBy} LIMIT @limit OFFSET @offset`;
   const rows = db.prepare(dataSql).all(params) as Record<string, unknown>[];
 
+  // Deduplicate by title + venue_name (some events appear twice with different pricing tiers)
+  const seen = new Set<string>();
+  const deduped = rows.filter((row) => {
+    const key = `${(row.title as string || '').toLowerCase()}|${(row.venue_name as string || '').toLowerCase()}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
   return {
-    events: rows.map(parseEventRow),
-    total,
+    events: deduped.map(parseEventRow),
+    total: Math.max(total - (rows.length - deduped.length), deduped.length),
   };
 }
 
@@ -277,7 +295,7 @@ export function getCategories(): { value: string; label: string }[] {
 export function getEventsForChat(query?: string): { id: number; title: string; category_l1: string; tagline: string; venue_name: string; next_start_at: string; is_free: boolean; price_summary: string; age_label: string; city: string; address: string }[] {
   const db = getDb();
 
-  const baseWhere = `status IN ('published', 'done', 'new') AND title NOT LIKE '%Rewards%' AND title NOT LIKE '%Royalty%' AND title NOT LIKE '%Loyalty%' AND title NOT LIKE '%Club Baja%' AND title NOT LIKE '%Join Club%' AND (category_l1 IS NULL OR category_l1 NOT IN ('food', 'networking'))`;
+  const baseWhere = `status IN ('published', 'done', 'new') AND title NOT LIKE '%Rewards%' AND title NOT LIKE '%Royalty%' AND title NOT LIKE '%Loyalty%' AND title NOT LIKE '%Club Baja%' AND title NOT LIKE '%Join Club%' AND (category_l1 IS NULL OR category_l1 NOT IN ('food', 'networking')) AND (COALESCE(next_end_at, datetime(next_start_at, '+1 day')) >= datetime('now') OR next_start_at IS NULL)`;
   const fields = `id, title, category_l1, tagline, venue_name, next_start_at, is_free, price_summary, age_label, city, address`;
 
   let searchWhere = '';
@@ -287,20 +305,57 @@ export function getEventsForChat(query?: string): { id: number; title: string; c
     searchWhere = ` AND (title LIKE @search OR tagline LIKE @search OR description LIKE @search OR tags LIKE @search)`;
   }
 
-  // Fix 5: Mix of upcoming events + highest rated for better context
-  // 60 nearest upcoming events + 40 highest-rated events (deduplicated)
-  const upcoming = db.prepare(
-    `SELECT ${fields} FROM events WHERE ${baseWhere}${searchWhere} ORDER BY next_start_at ASC LIMIT 60`
-  ).all(params) as Record<string, unknown>[];
+  // Traverse FULL dataset (not just top-N). When a query is supplied, the
+  // LIKE filter in `searchWhere` already narrows the candidate set in SQL.
+  // Otherwise we walk the whole table in stable pages and only cap at the
+  // very end (token-budget guard for the LLM prompt).
+  const PAGE = 500;
+  const HARD_CAP = 250; // upper bound for prompt tokens (~7.5k tokens)
+  const all: Record<string, unknown>[] = [];
+  let offset = 0;
+  let processed = 0;
+  // safeguard: never loop more than the table size / page
+  for (let i = 0; i < 50; i++) {
+    const page = db.prepare(
+      `SELECT ${fields} FROM events WHERE ${baseWhere}${searchWhere}
+       ORDER BY next_start_at ASC
+       LIMIT @lim OFFSET @off`
+    ).all({ ...params, lim: PAGE, off: offset }) as Record<string, unknown>[];
+    if (page.length === 0) break;
+    all.push(...page);
+    processed += page.length;
+    offset += PAGE;
+    if (page.length < PAGE) break; // no more data
+  }
 
+  // Mix in top-rated so good evergreen events aren't lost when we cap.
   const topRated = db.prepare(
-    `SELECT ${fields} FROM events WHERE ${baseWhere}${searchWhere} ORDER BY rating_avg DESC, rating_count DESC LIMIT 40`
+    `SELECT ${fields} FROM events WHERE ${baseWhere}${searchWhere}
+     ORDER BY rating_avg DESC, rating_count DESC LIMIT 50`
   ).all(params) as Record<string, unknown>[];
 
-  // Deduplicate
+  // Fallback: if query-narrowed traversal returns too little, also pull the
+  // full unfiltered traversal so the LLM still sees the wider catalogue.
+  let fallback: Record<string, unknown>[] = [];
+  if (query && all.length + topRated.length < 60) {
+    let foff = 0;
+    for (let i = 0; i < 50; i++) {
+      const page = db.prepare(
+        `SELECT ${fields} FROM events WHERE ${baseWhere}
+         ORDER BY next_start_at ASC LIMIT @lim OFFSET @off`
+      ).all({ lim: PAGE, off: foff }) as Record<string, unknown>[];
+      if (page.length === 0) break;
+      fallback.push(...page);
+      foff += PAGE;
+      if (page.length < PAGE) break;
+    }
+  }
+
+  // Deduplicate while preserving order: query-matches first, then top-rated,
+  // then unfiltered fallback.
   const seen = new Set<number>();
   const combined: Record<string, unknown>[] = [];
-  for (const row of [...upcoming, ...topRated]) {
+  for (const row of [...all, ...topRated, ...fallback]) {
     const id = row.id as number;
     if (!seen.has(id)) {
       seen.add(id);
@@ -308,7 +363,9 @@ export function getEventsForChat(query?: string): { id: number; title: string; c
     }
   }
 
-  return combined.slice(0, 100).map((row) => ({
+  console.log(`[getEventsForChat] processed=${processed} unique=${combined.length} query=${query || '∅'} → cap=${HARD_CAP}`);
+
+  return combined.slice(0, HARD_CAP).map((row) => ({
     ...row,
     is_free: Boolean(row.is_free),
   })) as { id: number; title: string; category_l1: string; tagline: string; venue_name: string; next_start_at: string; is_free: boolean; price_summary: string; age_label: string; city: string; address: string }[];

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import type { Event, FilterState } from '@/lib/types';
+import { initAnalytics, trackEvent as track } from '@/lib/analytics';
 import EventDetail from '@/components/EventDetail';
 import ChatSidebar from '@/components/ChatSidebar';
 import WhatFilter from '@/components/FilterDialogs/WhatFilter';
@@ -86,9 +87,10 @@ function HomeInner() {
   const [openFilter, setOpenFilter] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'feed' | 'foryou'>('feed');
 
-  // Auto-switch to "For you" tab when arriving from quiz
+  // Auto-switch to "For you" tab when arriving from quiz + track page view
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      initAnalytics();
       const params = new URLSearchParams(window.location.search);
       if (params.get('source') === 'quiz') setActiveTab('foryou');
     }
@@ -97,6 +99,7 @@ function HomeInner() {
 
   // Price range slider
   const [priceSlider, setPriceSlider] = useState(200);
+  const [chatResetKey, setChatResetKey] = useState(0);
 
   // Discovery state
   const [hoveredItemId, setHoveredItemId] = useState<number | null>(null);
@@ -215,6 +218,7 @@ function HomeInner() {
 
   // Handlers
   const handleEventClick = useCallback((event: Event) => {
+    track('card_opened', { event_id: event.id, event_title: event.title });
     setSelectedEvent(event);
     setDetailOpen(true);
     setSelectedItemId(event.id);
@@ -226,10 +230,12 @@ function HomeInner() {
   }, []);
 
   const handleFilterReset = useCallback(() => {
+    track('filter_applied', { filter_name: 'reset', filter_value: 'all' });
     setFilters({});
     setPage(1);
     setPriceSlider(850);
     setActiveTab('feed');
+    setChatResetKey((k) => k + 1);
   }, []);
 
   const handleFiltersFromChat = useCallback((newFilters: FilterState) => {
@@ -240,6 +246,7 @@ function HomeInner() {
 
   // Discovery handlers
   const handleCardClick = useCallback((event: Event) => {
+    track('card_clicked', { event_id: event.id, event_title: event.title, list_type: 'feed' });
     setSelectedItemId(event.id);
     setSelectedEvent(event);
     setDetailOpen(true);
@@ -284,6 +291,7 @@ function HomeInner() {
   // Filter dialog handlers
   const handleWhatApply = useCallback(
     (included: string[], excluded: string[], search: string) => {
+      track('filter_applied', { filter_name: 'what', filter_value: { categories: included, search } });
       setFilters((prev) => ({
         ...prev,
         categories: included.length > 0 ? included : undefined,
@@ -297,6 +305,7 @@ function HomeInner() {
   );
 
   const handleWhenApply = useCallback((dateFrom: string, dateTo: string) => {
+    track('filter_applied', { filter_name: 'when', filter_value: { dateFrom, dateTo } });
     setFilters((prev) => ({
       ...prev,
       dateFrom: dateFrom || undefined,
@@ -321,6 +330,7 @@ function HomeInner() {
   );
 
   const handleWhoApply = useCallback((ageMax?: number, filterChildren?: import('@/lib/types').FilterChild[]) => {
+    track('filter_applied', { filter_name: 'who', filter_value: { ageMax } });
     setFilters((prev) => ({
       ...prev,
       ageMax,
@@ -332,6 +342,7 @@ function HomeInner() {
   }, []);
 
   const handleWhereApply = useCallback((neighborhoods: string[]) => {
+    track('filter_applied', { filter_name: 'where', filter_value: { neighborhoods } });
     setFilters((prev) => ({
       ...prev,
       neighborhoods: neighborhoods.length > 0 && !neighborhoods.includes('Anywhere in NYC')
@@ -381,13 +392,13 @@ function HomeInner() {
           <div className="v2-header-tabs">
             <button
               className={`v2-header-tab ${activeTab === 'feed' ? 'active' : ''}`}
-              onClick={() => setActiveTab('feed')}
+              onClick={() => { track('tab_switched', { tab: 'feed' }); setActiveTab('feed'); }}
             >
               Feed ({allTotal})
             </button>
             <button
               className={`v2-header-tab ${activeTab === 'foryou' ? 'active' : ''}`}
-              onClick={() => setActiveTab('foryou')}
+              onClick={() => { track('tab_switched', { tab: 'foryou' }); setActiveTab('foryou'); }}
             >
               For you ({total})
             </button>
@@ -540,6 +551,7 @@ function HomeInner() {
 
             {/* ChatSidebar (reused, but rendered inline in the sidebar) */}
             <ChatSidebar
+              key={chatResetKey}
               filters={filters}
               onFiltersChange={handleFiltersFromChat}
               onEventClick={handleEventClick}

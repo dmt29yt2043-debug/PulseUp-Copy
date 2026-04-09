@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import type { ChatMessage, FilterState, Event, UserProfile, ChildProfile } from '@/lib/types';
 import ChatMessages from './ChatMessages';
 import type { MultiSelectState } from './ChatMessages';
+import { track } from '@/lib/analytics';
 
 interface ChatSidebarProps {
   filters: FilterState;
@@ -202,7 +203,13 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
       setProfile(stored);
       setOnboardingDone(true);
       setOnboardingStep('done');
-      applyProfileFilters(stored);
+      // Only auto-apply profile filters once per page load — not on remounts
+      // triggered by the global Reset button.
+      const w = window as unknown as { __pulseup_profile_filters_applied?: boolean };
+      if (!w.__pulseup_profile_filters_applied) {
+        applyProfileFilters(stored);
+        w.__pulseup_profile_filters_applied = true;
+      }
       setMessages([{ role: 'assistant', content: 'Welcome back! I remember your preferences. Ask me anything about events!' }]);
     } else {
       setMessages([{ role: 'assistant', content: "Hi! I'm your event assistant. Tell me about your children \u2014 their ages and how many. For example: \"daughter 6 and son 3\"" }]);
@@ -350,6 +357,7 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
     storeProfile(finalProfile);
     setOnboardingDone(true);
     setOnboardingStep('done');
+    track('onboarding_completed', { children_count: finalProfile.children.length, neighborhoods_count: finalProfile.neighborhoods.length });
     applyProfileFilters(finalProfile);
 
     const childrenDesc = finalProfile.children.map((c) =>
@@ -413,6 +421,12 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
     setMessages(newMessages);
     setInput('');
     setLoading(true);
+    if (messages.length === 0) {
+      track('chat_started', { entry_point: 'chat_sidebar' });
+    }
+    track('message_sent', { message_length: msgText.length, has_voice: false, has_text: true });
+    track('recommendations_requested', { query_type: 'chat', has_filters: !!(filters && Object.keys(filters).length) });
+    const __recsStart = Date.now();
 
     try {
       const res = await fetch('/api/chat', {
@@ -434,6 +448,13 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
         events: data.events,
         filters: data.filters,
       }]);
+
+      track('recommendations_shown', {
+        query: msgText,
+        results_count: (data.events?.length ?? data.total) || 0,
+        latency_ms: Date.now() - __recsStart,
+        filters: data.filters,
+      });
 
       if (data.filters && Object.keys(data.filters).length > 0) {
         onFiltersChange(data.filters);

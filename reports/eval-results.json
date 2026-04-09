@@ -5,29 +5,22 @@
     "query": "What can we do this weekend?",
     "expectedIntent": "Events happening this Saturday/Sunday, family-friendly",
     "extractedFilters": {
-      "dateFrom": "2026-04-02",
-      "dateTo": "2026-04-04",
-      "location": "Midtown",
-      "priceMax": 50
+      "dateFrom": "2026-04-11",
+      "dateTo": "2026-04-12"
     },
-    "eventsReturned": 3,
+    "eventsReturned": 10,
     "topEvents": [
-      "The East Midtown Easter Egg Hunt",
-      "The East Midtown Easter Egg Hunt 2026",
-      "The East Midtown Easter Egg Hunt 2026"
+      "American Girl® Doll Care Center - Doll Hospital",
+      "Comic Book Art Class for Kids",
+      "Faith Ringgold: Artist, Storyteller, Activist"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 24,
-    "broaderSearchTopEvents": [
-      "Italian Cooking Class for Children - Winter/Spring 2026 (Manhattan)",
-      "Fantastic Fungi Mushroom ID Hike",
-      "Newsies JR."
-    ],
-    "relevanceScore": 5,
+    "chatResponse": "Check out 'Butterfly Season at Kidspace' (free, Apr 12) — it's perfect for your 3-year-old son! Also, 'Spring Family Day at Carnegie Hall' (free, Apr 18) will be great fun for both your kids!",
+    "latencyMs": 4230,
+    "relevanceScore": 3,
     "completenessScore": 2,
-    "ageFitScore": 5,
-    "diagnosis": "partial_match",
-    "judgeExplanation": "The events returned are highly relevant, being family-friendly and free. However, several age-appropriate events, like 'Don’t Let the Pigeon Drive the Bus! The Musical!', were missed in the database search due to filtering, indicating incomplete results."
+    "ageFitScore": 3,
+    "diagnosis": "pipeline_issue",
+    "judgeExplanation": "The chatbot response mentioned events that do not match the date range of the query and missed relevant events like 'American Girl® Doll Care Center - Doll Hospital' which fit both the budget and age criteria."
   },
   {
     "id": 2,
@@ -36,27 +29,22 @@
     "expectedIntent": "Free events on the next day, any category",
     "extractedFilters": {
       "isFree": true,
-      "dateFrom": "2026-03-31",
-      "dateTo": "2026-03-31"
+      "dateFrom": "2026-04-08",
+      "dateTo": "2026-04-08"
     },
     "eventsReturned": 10,
     "topEvents": [
-      "Flavor Fanatic",
-      "Join Club Applebee's®",
-      "Unity by Hard Rock"
+      "American Girl® Doll Care Center - Doll Hospital",
+      "Comic Book Art Class for Kids",
+      "Faith Ringgold: Artist, Storyteller, Activist"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 38,
-    "broaderSearchTopEvents": [
-      "My Cold Stone Club Rewards",
-      "Starbucks® Rewards",
-      "Red Robin Royalty Program"
-    ],
-    "relevanceScore": 2,
-    "completenessScore": 1,
-    "ageFitScore": 2,
-    "diagnosis": "db_gap",
-    "judgeExplanation": "The events returned are mostly promotional programs and not suitable for young children, with none specifically matching the user's query for free events suitable for a 6-year-old and a 3-year-old. The system failed to find age-appropriate free events for the requested date."
+    "chatResponse": "Check out 'Virtual Family Storytime' (free, Apr 8) — a lovely way to engage your little ones! Perfect for your daughter and son aged 6 and 3.",
+    "latencyMs": 4420,
+    "relevanceScore": 3,
+    "completenessScore": 2,
+    "ageFitScore": 4,
+    "diagnosis": "pipeline_issue",
+    "judgeExplanation": "The returned events were somewhat relevant but did not include any of the found events from the broader database search that fit the criteria for free events on the specified date. The chatbot's response also mentioned an event that was not actually returned. Additionally, while most events are age-appropriate, there could be more options explicitly tailored for both children."
   },
   {
     "id": 3,
@@ -64,63 +52,42 @@
     "query": "What's happening on Easter?",
     "expectedIntent": "Easter/holiday/spring events around Easter date",
     "extractedFilters": {
-      "dateFrom": "2026-04-04",
-      "dateTo": "2026-04-04",
-      "location": "",
-      "categories": [
-        "family"
-      ]
+      "dateFrom": "2026-04-12",
+      "dateTo": "2026-04-12"
     },
     "eventsReturned": 10,
     "topEvents": [
-      "Unity by Hard Rock",
-      "Landry's Select Club",
-      "DSW VIP Program"
+      "American Girl® Doll Care Center - Doll Hospital",
+      "Comic Book Art Class for Kids",
+      "Faith Ringgold: Artist, Storyteller, Activist"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 1,
-    "broaderSearchTopEvents": [
-      "Newsies JR."
-    ],
-    "relevanceScore": 2,
-    "completenessScore": 2,
-    "ageFitScore": 3,
-    "diagnosis": "pipeline_issue",
-    "judgeExplanation": "The returned events are not directly relevant to Easter activities, and many missed upcoming family events that likely exist around the holiday. Age appropriateness varies, with only some events suitable for both children."
+    "chatResponse": "Check out 'The Sound of Music (Singalong Version)' (Apr 12) — a fun way for your kids to enjoy the classic tunes! Tickets for youth are only $10.",
+    "latencyMs": 3188,
+    "relevanceScore": 3,
+    "completenessScore": 3,
+    "ageFitScore": 4,
+    "diagnosis": "partial_match",
+    "judgeExplanation": "The returned event is somewhat relevant but does not directly relate to Easter festivities. Additionally, relevant events like the Spring Eggstravaganza were not surfaced, indicating a missed opportunity to provide a more comprehensive response."
   },
   {
     "id": 4,
     "category": "Weekend Planning",
     "query": "Activities for a rainy day?",
     "expectedIntent": "Indoor activities, museums, theaters, workshops",
-    "extractedFilters": {
-      "categories": [
-        "family",
-        "arts",
-        "theater",
-        "attractions",
-        "children's activities"
-      ],
-      "location": "Midtown"
-    },
-    "eventsReturned": 3,
+    "extractedFilters": {},
+    "eventsReturned": 10,
     "topEvents": [
-      "The East Midtown Easter Egg Hunt",
-      "The East Midtown Easter Egg Hunt 2026",
-      "The East Midtown Easter Egg Hunt 2026"
+      "American Girl® Doll Care Center - Doll Hospital",
+      "Comic Book Art Class for Kids",
+      "Faith Ringgold: Artist, Storyteller, Activist"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 20,
-    "broaderSearchTopEvents": [
-      "My Cold Stone Club Rewards",
-      "Einstein's Bagels Rewards Program",
-      "Panera Bread MyPanera Rewards Program"
-    ],
-    "relevanceScore": 2,
+    "chatResponse": "Check out 'The Very Hungry Caterpillar Interactive Show' (Apr 26) — a delightful event perfect for your 3-year-old! It's a fun indoor activity that combines storytelling and puppetry.",
+    "latencyMs": 4432,
+    "relevanceScore": 3,
     "completenessScore": 2,
-    "ageFitScore": 3,
+    "ageFitScore": 4,
     "diagnosis": "pipeline_issue",
-    "judgeExplanation": "The returned events primarily feature an Easter egg hunt, which may not be suitable for a rainy day indoor activity. Additionally, it seems there are suitable indoor events for the age group that were missed in the search results."
+    "judgeExplanation": "While some returned events are relevant, such as indoor activities, many relevant options exist in the broader database that were not surfaced. Additionally, the event mentioned was not part of the initial results."
   },
   {
     "id": 5,
@@ -132,22 +99,17 @@
     },
     "eventsReturned": 10,
     "topEvents": [
-      "Unity by Hard Rock",
-      "Landry's Select Club",
-      "DSW VIP Program"
+      "Faith Ringgold: Artist, Storyteller, Activist",
+      "RECESS!! Epic Interactive Family Fun at a Surreal Playground!",
+      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 21,
-    "broaderSearchTopEvents": [
-      "Newsies JR.",
-      "My Cold Stone Club Rewards",
-      "Flavor Fanatic"
-    ],
-    "relevanceScore": 3,
+    "chatResponse": "Check out 'Open Play for Babies and Toddlers' (free, Apr 1) — a fun chance for your little one to play and explore! Another great option is 'Lapsit Storytime: Babies and Books' (free, Apr 6), perfect for nurturing early reading skills.",
+    "latencyMs": 9394,
+    "relevanceScore": 4,
     "completenessScore": 3,
-    "ageFitScore": 4,
+    "ageFitScore": 5,
     "diagnosis": "partial_match",
-    "judgeExplanation": "While the events listed include some that are appropriate for a 3-year-old, such as RECESS!! and The Orchid Show, several entries are unrelated to the user's query. There may be more relevant events for toddlers that were not included."
+    "judgeExplanation": "While some relevant events for the 3-year-old were identified, several suitable options for toddlers were overlooked in the initial response, leading to missed opportunities for a more comprehensive suggestion."
   },
   {
     "id": 6,
@@ -162,22 +124,17 @@
     },
     "eventsReturned": 10,
     "topEvents": [
-      "Pete the Cat",
-      "Aladdin & the Wonderful Lamp",
-      "The Very Hungry Caterpillar Interactive Show"
+      "Circus Vazquez",
+      "YOAH",
+      "Aladdin & the Wonderful Lamp"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 27,
-    "broaderSearchTopEvents": [
-      "Pete the Cat",
-      "Aladdin & the Wonderful Lamp",
-      "Dead Father, Stepfather, Girl Father — A Comedy Show by A Chinese Queer Kid"
-    ],
+    "chatResponse": "Check out 'Rodgers & Hammerstein’s Cinderella' (from $15, Apr 4) — a magical experience for your 7-year-old! Also, 'YOAH' (starting at $2, Apr 25) is another fantastic option to enjoy together.",
+    "latencyMs": 3754,
     "relevanceScore": 5,
-    "completenessScore": 4,
+    "completenessScore": 5,
     "ageFitScore": 5,
-    "diagnosis": "partial_match",
-    "judgeExplanation": "The chatbot returned several relevant theater events suitable for a 7-year-old girl. However, there may be other relevant events that could fit the user's query that weren't included in the results."
+    "diagnosis": "good_match",
+    "judgeExplanation": "The events returned are highly relevant to the query, age-appropriate for a 7-year-old girl, and all fall within the budget. The response effectively highlights suitable theater options."
   },
   {
     "id": 7,
@@ -185,22 +142,21 @@
     "query": "Something for a teenager, 13+",
     "expectedIntent": "Events suitable for teens, not too childish",
     "extractedFilters": {
-      "ageMax": 18
+      "ageMax": 13
     },
     "eventsReturned": 10,
     "topEvents": [
-      "Flavor Fanatic",
-      "Join Club Applebee's®",
-      "Unity by Hard Rock"
+      "American Girl® Doll Care Center - Doll Hospital",
+      "Comic Book Art Class for Kids",
+      "Faith Ringgold: Artist, Storyteller, Activist"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 0,
-    "broaderSearchTopEvents": [],
+    "chatResponse": "Check out the 'Ensemble Spotlight Series' at Carnegie Hall (tickets start at $35, Apr 19) — a fantastic way for teens to enjoy live music! For something more interactive, there's the 'Spring Family Day at Carnegie Hall' (free, Apr 18) that includes engaging activities.",
+    "latencyMs": 3599,
     "relevanceScore": 1,
     "completenessScore": 1,
-    "ageFitScore": 1,
+    "ageFitScore": 5,
     "diagnosis": "db_gap",
-    "judgeExplanation": "The returned events are not relevant to the user's request for events suitable for teenagers and do not fit the age range for the children either. There is a lack of available events in the database for the specified query."
+    "judgeExplanation": "The returned events are not relevant to the query for teenager events, as all found events are targeted towards younger children. Therefore, there seems to be a gap in the database for suitable events for teens."
   },
   {
     "id": 8,
@@ -208,28 +164,21 @@
     "query": "Baby-friendly activities for under 2",
     "expectedIntent": "Infant/baby events, sensory play, baby storytime",
     "extractedFilters": {
-      "ageMax": 2,
-      "priceMax": 50,
-      "strollerFriendly": true
+      "ageMax": 1
     },
     "eventsReturned": 10,
     "topEvents": [
-      "Unity by Hard Rock",
-      "DSW VIP Program",
-      "Faith Ringgold: Artist, Storyteller, Activist"
+      "Faith Ringgold: Artist, Storyteller, Activist",
+      "RECESS!! Epic Interactive Family Fun at a Surreal Playground!",
+      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 39,
-    "broaderSearchTopEvents": [
-      "My Cold Stone Club Rewards",
-      "Einstein's Bagels Rewards Program",
-      "Panera Bread MyPanera Rewards Program"
-    ],
-    "relevanceScore": 3,
+    "chatResponse": "Check out 'Lapsit Storytime: Baby and Me' (free, Apr 6) — perfect for your little one! There will be stories, songs, and playtime in a friendly environment.",
+    "latencyMs": 2763,
+    "relevanceScore": 4,
     "completenessScore": 2,
-    "ageFitScore": 3,
-    "diagnosis": "partial_match",
-    "judgeExplanation": "While some events returned are baby-friendly or suitable for the user's query, the majority are not directly focused on infants under 2, leading to incomplete results for the specific needs of the user. Only one event (Coloring for Babies and Toddlers) closely matches the query."
+    "ageFitScore": 2,
+    "diagnosis": "pipeline_issue",
+    "judgeExplanation": "The returned events were mostly for older children and did not include specific activities for infants under 2 years old. However, there are relevant events available in the broader database that were not surfaced."
   },
   {
     "id": 9,
@@ -238,30 +187,23 @@
     "expectedIntent": "Arts/creative workshops, painting, crafts",
     "extractedFilters": {
       "categories": [
-        "arts",
-        "Children's Activities"
+        "arts"
       ],
-      "priceMax": 50,
-      "ageMax": 10
+      "ageMax": 12
     },
-    "eventsReturned": 10,
+    "eventsReturned": 7,
     "topEvents": [
-      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle",
+      "Faith Ringgold: Artist, Storyteller, Activist",
       "Anish Kapoor: Mirror Works",
-      "Coloring for Babies and Toddlers"
+      "Paint Your heART Out! Painting Class for Kids"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 26,
-    "broaderSearchTopEvents": [
-      "Kohl's Rewards Program",
-      "Italian Cooking Class for Children - Winter/Spring 2026 (Manhattan)",
-      "Cooking and Art Lab for Children - Winter/Spring 2026"
-    ],
-    "relevanceScore": 5,
-    "completenessScore": 4,
+    "chatResponse": "Check out 'Crafternoon' (free, Apr 3) at 53rd Street Library — a fun art class perfect for your kids! They can also enjoy 'Paint Your heART Out! Painting Class for Kids' (free, Mar 4), where creativity takes center stage.",
+    "latencyMs": 2482,
+    "relevanceScore": 4,
+    "completenessScore": 3,
     "ageFitScore": 5,
     "diagnosis": "partial_match",
-    "judgeExplanation": "Most of the events returned are relevant to the user's query for art classes, particularly for Emma. However, it appears that some additional relevant art-related events (like the 'Cooking and Art Lab for Children') were missed in the broader search."
+    "judgeExplanation": "While the response includes relevant art classes, it misses additional suitable events such as 'Faith Ringgold: Artist, Storyteller, Activist' and 'Dumbo Open Studios 2026,' which fit the age range and budget."
   },
   {
     "id": 10,
@@ -269,32 +211,23 @@
     "query": "Outdoor activities in Brooklyn",
     "expectedIntent": "Outdoor/park events in Brooklyn area",
     "extractedFilters": {
-      "location": "Brooklyn",
       "categories": [
-        "sports",
-        "family",
-        "Children's Activities"
-      ],
-      "priceMax": 50
+        "outdoors"
+      ]
     },
-    "eventsReturned": 10,
+    "eventsReturned": 3,
     "topEvents": [
-      "Aladdin & the Wonderful Lamp",
-      "Aladdin & the Wonderful Lamp",
-      "Brooklyn Museum Sunday Art Hang"
+      "Earth Day on Governors Island",
+      "Earth Day Celebration at Brooklyn Bridge Park",
+      "Earth Day Festival on Randall's Island"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 54,
-    "broaderSearchTopEvents": [
-      "Hicks Nurseries’ 36th Annual Flower & Garden Show",
-      "Spring Has Sprung Hike",
-      "US Coffee 4 Mile Run/Walk For LLS"
-    ],
-    "relevanceScore": 5,
-    "completenessScore": 4,
-    "ageFitScore": 5,
+    "chatResponse": "Check out 'Nature Festival' (free, Apr 4) at Tanglewood Preserve — exciting for your little ones! Plus, don't miss the 'Annual Brooklyn Carnival' (requires registration) this weekend for more fun outdoors!",
+    "latencyMs": 2321,
+    "relevanceScore": 3,
+    "completenessScore": 3,
+    "ageFitScore": 4,
     "diagnosis": "partial_match",
-    "judgeExplanation": "The returned events are relevant to outdoor activities in Brooklyn and are suitable for the user's children. However, there might be additional outdoor events in the broader database that were not captured by the current filters."
+    "judgeExplanation": "The returned events are somewhat relevant but do not fully align with the user's query for outdoor activities in Brooklyn; more suitable events were identified in the broader search that should have been included."
   },
   {
     "id": 11,
@@ -302,29 +235,21 @@
     "query": "Science museums for kids",
     "expectedIntent": "Science/educational museum events",
     "extractedFilters": {
-      "categories": [
-        "science"
-      ],
-      "ageMax": 12
+      "search": "science"
     },
-    "eventsReturned": 5,
+    "eventsReturned": 10,
     "topEvents": [
-      "Seal Cruise",
-      "Family Science: Sounds of Science",
-      "Eggstravaganza!"
+      "Nature Festival",
+      "Nature Festival",
+      "STEAM Break: 18th century Food Science"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 30,
-    "broaderSearchTopEvents": [
-      "Seal Cruise",
-      "Family Science: Sounds of Science",
-      "Nature Festival"
-    ],
+    "chatResponse": "Check out 'Nature Festival' at Tanglewood Preserve (Apr 4) — it's a fun event for your kids! Perfect for your son’s love of outdoor activities and getting to explore nature.",
+    "latencyMs": 2072,
     "relevanceScore": 4,
     "completenessScore": 3,
-    "ageFitScore": 5,
+    "ageFitScore": 4,
     "diagnosis": "partial_match",
-    "judgeExplanation": "The events returned are generally relevant, especially the free science events suitable for age 6. However, there are potentially relevant events like 'Open Hours at Environmental Education Center' that weren't found due to the initial filters applied."
+    "judgeExplanation": "The response highlighted a relevant event for outdoor interests but missed several relevant science-focused events that would be suitable for both children. Events like 'Crazy Science Show' and 'Earthfest' were relevant and age-appropriate."
   },
   {
     "id": 12,
@@ -332,29 +257,24 @@
     "query": "Dance or music classes",
     "expectedIntent": "Music/dance classes or performances",
     "extractedFilters": {
+      "search": "dance",
       "categories": [
-        "children's activities",
-        "music"
+        "family"
       ]
     },
-    "eventsReturned": 10,
+    "eventsReturned": 9,
     "topEvents": [
-      "The Very Hungry Caterpillar Interactive Show",
-      "Olivia & Grease vs. Dolly & Divas @ Studio Theatre Long Island",
-      "Hopalong Andrew"
+      "Mommy & Me Class: Music and Movement in French and English!",
+      "A Dream Is A Wish Princess Concert",
+      "IndiePlaza and Tiny Indie at the Rink at Rockefeller Center"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 38,
-    "broaderSearchTopEvents": [
-      "Italian Cooking Class for Children - Winter/Spring 2026 (Manhattan)",
-      "New York City Tartan Day Parade",
-      "Hopalong Andrew"
-    ],
-    "relevanceScore": 4,
-    "completenessScore": 3,
+    "chatResponse": "Check out 'Family Italian Cooking Class - Winter/Spring 2026 (Brooklyn)' (free, Apr 28) — it's a fun way for your kids to explore creativity through cooking! For music lovers, 'Kids Class! Ice Cream Sundae Decorating in Queens' offers a sweet treat while engaging in a creative activity (free, Mar 21).",
+    "latencyMs": 3304,
+    "relevanceScore": 1,
+    "completenessScore": 2,
     "ageFitScore": 5,
-    "diagnosis": "partial_match",
-    "judgeExplanation": "Most returned events are age-appropriate and related to music or dance, but not all relevant options (like certain classes or performances) were captured, suggesting missed opportunities in the search criteria."
+    "diagnosis": "pipeline_issue",
+    "judgeExplanation": "The returned events are not relevant to the query about dance or music classes. Additionally, there are relevant music events available in the broader database search that were not surfaced."
   },
   {
     "id": 13,
@@ -367,24 +287,19 @@
       ],
       "ageMax": 8
     },
-    "eventsReturned": 10,
+    "eventsReturned": 4,
     "topEvents": [
-      "Pickleball Community Events",
-      "Girls Winter Softball Clinics",
-      "US Coffee 4 Mile Run/Walk For LLS"
+      "Brooklyn Cyclones Bark in the Park",
+      "Jackie Robinson Day in Jackie Robinson Park",
+      "Pickleball Community Events"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 29,
-    "broaderSearchTopEvents": [
-      "Basketball Clinic at Southampton Youth Services (SYS)",
-      "Girls Winter Softball Clinics",
-      "ASPIRE 10K"
-    ],
-    "relevanceScore": 3,
+    "chatResponse": "Check out the 'Basketball Clinic at Southampton Youth Services (SYS)' ($50 for entire series) — a great way for your 8-year-old to improve his skills! Also consider 'Pickleball Community Events' (free), perfect for fun and play.",
+    "latencyMs": 2028,
+    "relevanceScore": 5,
     "completenessScore": 3,
-    "ageFitScore": 2,
+    "ageFitScore": 5,
     "diagnosis": "partial_match",
-    "judgeExplanation": "While some events were relevant to sports activities, they did not specifically cater to the age 8 requirement. Additionally, several age-appropriate events for younger children, like Emma and Leo, were not included in the returned results."
+    "judgeExplanation": "While the returned events were highly relevant to sports activities for the specified age, the response mentioned an event that was not in the initial filtered results and missed some suitable activities (like 'Brooklyn Cyclones Bark in the Park') that are relevant and aligned with the age range."
   },
   {
     "id": 14,
@@ -392,27 +307,21 @@
     "query": "Free things to do with kids",
     "expectedIntent": "Free events only, family-friendly",
     "extractedFilters": {
-      "isFree": true,
-      "ageMax": 12
+      "isFree": true
     },
     "eventsReturned": 10,
     "topEvents": [
-      "Unity by Hard Rock",
-      "Landry's Select Club",
-      "DSW VIP Program"
+      "American Girl® Doll Care Center - Doll Hospital",
+      "Comic Book Art Class for Kids",
+      "Faith Ringgold: Artist, Storyteller, Activist"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 30,
-    "broaderSearchTopEvents": [
-      "My Cold Stone Club Rewards",
-      "Starbucks® Rewards",
-      "Red Robin Royalty Program"
-    ],
-    "relevanceScore": 4,
-    "completenessScore": 3,
-    "ageFitScore": 4,
+    "chatResponse": "Check out 'Virtual Family Storytime' (free, Apr 7) — a great way to enjoy stories together! Don't miss 'Family Saturday: French Storytime' (free, Apr 4), perfect for engaging your kids in a fun bilingual experience.",
+    "latencyMs": 2776,
+    "relevanceScore": 5,
+    "completenessScore": 4,
+    "ageFitScore": 5,
     "diagnosis": "partial_match",
-    "judgeExplanation": "The returned events include some suitable free options for the children's age range, but there may be other relevant free activities in NYC that were not captured by the filters."
+    "judgeExplanation": "The returned events are very relevant to the query for free activities, and they fit well with the age range of the children. However, there are additional relevant events in the database that were not surfaced."
   },
   {
     "id": 15,
@@ -420,26 +329,23 @@
     "query": "Activities under $20 per person",
     "expectedIntent": "Events with price_max <= 20",
     "extractedFilters": {
-      "priceMax": 20
+      "isFree": false,
+      "dateFrom": "2026-04-07",
+      "dateTo": "2026-04-12"
     },
     "eventsReturned": 10,
     "topEvents": [
-      "Flavor Fanatic",
-      "Join Club Applebee's®",
-      "Unity by Hard Rock"
+      "RECESS!! Epic Interactive Family Fun at a Surreal Playground!",
+      "Cooking and Art Lab for Children - Winter/Spring 2026 (Manhattan)",
+      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 55,
-    "broaderSearchTopEvents": [
-      "My Cold Stone Club Rewards",
-      "Einstein's Bagels Rewards Program",
-      "Panera Bread MyPanera Rewards Program"
-    ],
-    "relevanceScore": 1,
-    "completenessScore": 1,
-    "ageFitScore": 1,
-    "diagnosis": "db_gap",
-    "judgeExplanation": "The returned events are free but do not meet the user’s interest in activities priced under $20 per person, and they lack appropriate age-appropriate options for the children mentioned."
+    "chatResponse": "Check out 'The Sound of Music (Singalong Version)' ($10 youth, Apr 12) — a fun musical experience that's great for your kids! Also, don't miss 'Color Factory: Colors in Bloom' ($29, Apr 5) for some colorful adventures.",
+    "latencyMs": 2895,
+    "relevanceScore": 2,
+    "completenessScore": 2,
+    "ageFitScore": 5,
+    "diagnosis": "pipeline_issue",
+    "judgeExplanation": "The chatbot response provided one relevant event but missed several others that fit the user's budget and criteria, indicating that the system did not fully leverage the broader search results."
   },
   {
     "id": 16,
@@ -447,74 +353,43 @@
     "query": "Cheap weekend options for a family of 4",
     "expectedIntent": "Budget-friendly weekend events, affordable",
     "extractedFilters": {
-      "priceMax": 50,
-      "categories": [
-        "family"
-      ],
-      "dateFrom": "2026-04-01",
-      "dateTo": "2026-04-03"
+      "isFree": true,
+      "dateFrom": "2026-04-11",
+      "dateTo": "2026-04-12"
     },
     "eventsReturned": 10,
     "topEvents": [
-      "Unity by Hard Rock",
-      "Landry's Select Club",
-      "DSW VIP Program"
+      "American Girl® Doll Care Center - Doll Hospital",
+      "Comic Book Art Class for Kids",
+      "Faith Ringgold: Artist, Storyteller, Activist"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 27,
-    "broaderSearchTopEvents": [
-      "Hicks Nurseries’ 36th Annual Flower & Garden Show",
-      "Circus Vazquez",
-      "International Public Policy Forum (IPPF) Finals Weekend"
-    ],
-    "relevanceScore": 4,
-    "completenessScore": 3,
+    "chatResponse": "Check out 'Crafternoon' at 53rd Street Library (free, Apr 11) — great for your creative kids! You might also enjoy 'Virtual Family Storytime' online (free, Apr 7) for some fun storytelling together.",
+    "latencyMs": 2925,
+    "relevanceScore": 5,
+    "completenessScore": 4,
     "ageFitScore": 5,
     "diagnosis": "partial_match",
-    "judgeExplanation": "The returned events include several budget-friendly options suitable for the ages of the children, but there may be additional relevant events that were not discovered due to filtering. Some great kid-friendly events may exist in the broader database that were overlooked."
+    "judgeExplanation": "The events returned are highly relevant and suitable for the children's ages, particularly 'Crafternoon.' However, the system missed additional suitable events like 'Kids Class! Ice Cream Sundae Decorating in Queens' which aligns well with the family's interests."
   },
   {
     "id": 17,
     "category": "Location-Specific",
     "query": "Events near Midtown Manhattan",
     "expectedIntent": "Events in Midtown area geographically",
-    "extractedFilters": {
-      "location": "Midtown",
-      "categories": [
-        "family",
-        "arts",
-        "theater",
-        "attractions",
-        "books",
-        "holiday",
-        "sports",
-        "Art",
-        "Children's Activities",
-        "music",
-        "science",
-        "film",
-        "gaming",
-        "community"
-      ]
-    },
-    "eventsReturned": 3,
+    "extractedFilters": {},
+    "eventsReturned": 10,
     "topEvents": [
-      "The East Midtown Easter Egg Hunt",
-      "The East Midtown Easter Egg Hunt 2026",
-      "The East Midtown Easter Egg Hunt 2026"
+      "American Girl® Doll Care Center - Doll Hospital",
+      "Comic Book Art Class for Kids",
+      "Faith Ringgold: Artist, Storyteller, Activist"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 34,
-    "broaderSearchTopEvents": [
-      "DSW VIP Program",
-      "Pickleball Community Events",
-      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle"
-    ],
+    "chatResponse": "Check out 'Virtual Family Storytime' (free, Apr 7) at 11:00 AM — a great way for your little ones to enjoy stories together! Also, join 'Lapsit Storytime: Babies and Books' (free, Apr 7) at 3:30 PM, perfect for bonding with your kids.",
+    "latencyMs": 4881,
     "relevanceScore": 5,
-    "completenessScore": 3,
+    "completenessScore": 4,
     "ageFitScore": 5,
     "diagnosis": "partial_match",
-    "judgeExplanation": "The returned events are highly relevant as they are family-oriented and free, aligning with the user's budget and children's age range. However, there may be other suitable events available that were not retrieved due to filtering limitations."
+    "judgeExplanation": "The events provided are highly relevant and age-appropriate for both children. However, the chatbot missed other relevant events available in the broader database search that fit the user's query for events in Midtown Manhattan."
   },
   {
     "id": 18,
@@ -522,28 +397,25 @@
     "query": "What's happening in Brooklyn this week?",
     "expectedIntent": "Brooklyn events, current week dates",
     "extractedFilters": {
-      "location": "Brooklyn",
-      "dateFrom": "2026-03-30",
-      "dateTo": "2026-04-05"
+      "neighborhoods": [
+        "Brooklyn"
+      ],
+      "dateFrom": "2026-04-07",
+      "dateTo": "2026-04-12"
     },
     "eventsReturned": 10,
     "topEvents": [
-      "Aladdin & the Wonderful Lamp",
-      "Aladdin & the Wonderful Lamp",
-      "Brooklyn Museum Sunday Art Hang"
+      "Comic Book Art Class for Kids",
+      "Cooking and Art Lab for Children - Winter/Spring 2026 (Manhattan)",
+      "Anish Kapoor: Mirror Works"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 33,
-    "broaderSearchTopEvents": [
-      "Newsies JR.",
-      "Aladdin & the Wonderful Lamp",
-      "Aladdin & the Wonderful Lamp"
-    ],
+    "chatResponse": "Check out 'Brooklyn Museum Sunday Art Hang' (free, Apr 11) — great for your 6-year-old! Perfect for some creative exploration with art.",
+    "latencyMs": 2112,
     "relevanceScore": 4,
     "completenessScore": 3,
     "ageFitScore": 5,
     "diagnosis": "partial_match",
-    "judgeExplanation": "The events returned are generally relevant and age-appropriate for the user's children, especially the free egg hunts. However, there may be other suitable events in the broader database that weren't included in the results."
+    "judgeExplanation": "The response included one relevant event, but several others that fit the age criteria and budget were overlooked, such as 'Aladdin & the Wonderful Lamp' and 'Color Factory: Colors in Bloom.' A broader search indicated more applicable options."
   },
   {
     "id": 19,
@@ -551,27 +423,23 @@
     "query": "Anything in the Bronx for kids?",
     "expectedIntent": "Bronx-area family events",
     "extractedFilters": {
-      "location": "Bronx",
-      "ageMax": 12
+      "neighborhoods": [
+        "Bronx"
+      ]
     },
-    "eventsReturned": 9,
+    "eventsReturned": 10,
     "topEvents": [
       "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle",
-      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle",
-      "Family Art Project: Wear a Garden"
+      "CAMP New York City",
+      "Hopalong Andrew"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 4,
-    "broaderSearchTopEvents": [
-      "Urban Environmental Challenge Race",
-      "Sunday Funday at Bronx Children's Museum",
-      "Zoo Explorers: Bugs and Butterflies"
-    ],
-    "relevanceScore": 4,
-    "completenessScore": 3,
-    "ageFitScore": 4,
-    "diagnosis": "partial_match",
-    "judgeExplanation": "The events returned are largely relevant to the user's query about family activities in the Bronx, but some suitable events for Leo (3yo) were overlooked. Additionally, there's a missed opportunity as some relevant events might exist in the broader database that were not retrieved."
+    "chatResponse": "Check out 'Brooklyn Museum Sunday Art Hang' (free, Mar 15) — a perfect outing for your kids! Experience creativity together and enjoy family-friendly activities.",
+    "latencyMs": 1969,
+    "relevanceScore": 1,
+    "completenessScore": 2,
+    "ageFitScore": 2,
+    "diagnosis": "pipeline_issue",
+    "judgeExplanation": "The returned event 'Brooklyn Museum Sunday Art Hang' is not in the Bronx, making it irrelevant. The system did not surface relevant Bronx events that match the user's budget and children's ages."
   },
   {
     "id": 20,
@@ -583,22 +451,17 @@
     },
     "eventsReturned": 10,
     "topEvents": [
-      "Unity by Hard Rock",
-      "DSW VIP Program",
-      "American Girl® Doll Care Center - Doll Hospital"
+      "American Girl® Doll Care Center - Doll Hospital",
+      "Comic Book Art Class for Kids",
+      "Faith Ringgold: Artist, Storyteller, Activist"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 22,
-    "broaderSearchTopEvents": [
-      "Pickleball Community Events",
-      "CAMP New York City",
-      "It’s Our Only Earth Day 5K"
-    ],
-    "relevanceScore": 4,
+    "chatResponse": "Check out 'Virtual Family Storytime' (free, Apr 7) — perfect for your little ones at home! You can also explore 'Kids' Looks Sale' (free, ongoing) for some fun and unique kids' clothing options.",
+    "latencyMs": 2583,
+    "relevanceScore": 1,
     "completenessScore": 3,
-    "ageFitScore": 4,
-    "diagnosis": "partial_match",
-    "judgeExplanation": "The returned events largely align with the user's query for wheelchair-accessible activities and are generally age-appropriate. However, some potentially relevant events may exist in the broader database that were not included in the final results, suggesting room for improvement in filtering."
+    "ageFitScore": 2,
+    "diagnosis": "pipeline_issue",
+    "judgeExplanation": "The events returned did not address the user's query for wheelchair-accessible activities and instead showed unrelated events. However, a broader search indicated relevant activities that meet the criteria."
   },
   {
     "id": 21,
@@ -610,47 +473,37 @@
     },
     "eventsReturned": 10,
     "topEvents": [
-      "Unity by Hard Rock",
-      "DSW VIP Program",
-      "American Girl® Doll Care Center - Doll Hospital"
+      "American Girl® Doll Care Center - Doll Hospital",
+      "Comic Book Art Class for Kids",
+      "Faith Ringgold: Artist, Storyteller, Activist"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 25,
-    "broaderSearchTopEvents": [
-      "Pickleball Community Events",
-      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle",
-      "The Very Hungry Caterpillar Interactive Show"
-    ],
-    "relevanceScore": 4,
-    "completenessScore": 4,
-    "ageFitScore": 4,
-    "diagnosis": "partial_match",
-    "judgeExplanation": "Most of the returned events are stroller-friendly and suitable for the children's ages, but there may be other age-appropriate events available that were not included in the results. A few additional relevant events were found in the broader database search that were not returned initially."
+    "chatResponse": "Check out 'Crafternoon' at the 53rd Street Library (free, Apr 3) — a fun activity perfect for your little ones! Don't miss 'Open Play for Babies and Toddlers' at Columbus Library (free, Apr 1) which is just right for your 3-year-old.",
+    "latencyMs": 2681,
+    "relevanceScore": 2,
+    "completenessScore": 2,
+    "ageFitScore": 3,
+    "diagnosis": "pipeline_issue",
+    "judgeExplanation": "The chatbot response included events that were not in the returned list, indicating that there are relevant events not being surfaced. Additionally, the age fit for returned events is limited, especially for the 3-year-old."
   },
   {
     "id": 22,
     "category": "Specific Needs",
     "query": "Bilingual Spanish events for kids",
     "expectedIntent": "Spanish/bilingual programming for children",
-    "extractedFilters": {
-      "search": "bilingual Spanish",
-      "location": "Midtown",
-      "ageMax": 12
-    },
-    "eventsReturned": 0,
-    "topEvents": [],
-    "chatResponse": "",
-    "broaderSearchCount": 39,
-    "broaderSearchTopEvents": [
-      "Storytime with the Symphony 2026",
-      "Sunday Morning Family Jams with Musiquita",
-      "DSW VIP Program"
+    "extractedFilters": {},
+    "eventsReturned": 10,
+    "topEvents": [
+      "American Girl® Doll Care Center - Doll Hospital",
+      "Comic Book Art Class for Kids",
+      "Faith Ringgold: Artist, Storyteller, Activist"
     ],
+    "chatResponse": "Check out the 'Family Saturday: French Storytime' (free, Apr 4) — a great opportunity for your children to enjoy stories in a different language! Although this focuses on French, bilingual storytime events can be a fun way to expose kids to new languages.",
+    "latencyMs": 1925,
     "relevanceScore": 1,
-    "completenessScore": 1,
-    "ageFitScore": 2,
-    "diagnosis": "db_gap",
-    "judgeExplanation": "No events specifically focused on bilingual Spanish programming for children were found in the database, indicating a lack of such events in the current offerings. The relevant events retrieved do not match the user's query or provide age-appropriate options."
+    "completenessScore": 2,
+    "ageFitScore": 3,
+    "diagnosis": "pipeline_issue",
+    "judgeExplanation": "The returned events do not match the request for bilingual Spanish events, and relevant events exist in the broader database search that the system did not surface."
   },
   {
     "id": 23,
@@ -660,51 +513,37 @@
     "extractedFilters": {},
     "eventsReturned": 10,
     "topEvents": [
-      "Flavor Fanatic",
-      "Join Club Applebee's®",
-      "Unity by Hard Rock"
+      "American Girl® Doll Care Center - Doll Hospital",
+      "Comic Book Art Class for Kids",
+      "Faith Ringgold: Artist, Storyteller, Activist"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 2,
-    "broaderSearchTopEvents": [
-      "Patterns at Lincoln Center",
-      "Antarctica! Crew Wanted"
-    ],
-    "relevanceScore": 2,
-    "completenessScore": 2,
-    "ageFitScore": 3,
-    "diagnosis": "pipeline_issue",
-    "judgeExplanation": "While some events are found, there are better options in the database, and the search did not capture relevant activities for the children’s ages and interests. The inclusion of creative and outdoor activities could greatly enhance the suggestions."
+    "chatResponse": "Check out 'Crafternoon' at the 53rd Street Library (free, Apr 3) — perfect for your 6-year-old! It's a fun art activity where kids can get creative. Plus, there's 'Open Play for Babies and Toddlers' at Columbus Library, also free, which your 3-year-old will enjoy!",
+    "latencyMs": 2117,
+    "relevanceScore": 5,
+    "completenessScore": 5,
+    "ageFitScore": 5,
+    "diagnosis": "good_match",
+    "judgeExplanation": "The chatbot provided relevant events that cater specifically to the children's ages and interests, including art activities for the 6-year-old and play options for the 3-year-old. It successfully captured the family's need for diverse fun activities."
   },
   {
     "id": 24,
     "category": "Discovery",
     "query": "Best family experience in NYC right now",
     "expectedIntent": "Top-rated or popular current events",
-    "extractedFilters": {
-      "categories": [
-        "family"
-      ],
-      "priceMax": 50
-    },
+    "extractedFilters": {},
     "eventsReturned": 10,
     "topEvents": [
-      "Unity by Hard Rock",
-      "Landry's Select Club",
-      "DSW VIP Program"
+      "American Girl® Doll Care Center - Doll Hospital",
+      "Comic Book Art Class for Kids",
+      "Faith Ringgold: Artist, Storyteller, Activist"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 59,
-    "broaderSearchTopEvents": [
-      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle",
-      "Complimentary Personal Shopping",
-      "Hicks Nurseries’ 36th Annual Flower & Garden Show"
-    ],
-    "relevanceScore": 4,
-    "completenessScore": 3,
-    "ageFitScore": 5,
-    "diagnosis": "partial_match",
-    "judgeExplanation": "The returned events include several family-friendly options, but some notable relevant events like 'The Very Hungry Caterpillar Interactive Show' and 'Little Mermaid The Musical' were missed. The age fits are appropriate for both children."
+    "chatResponse": "Check out 'Virtual Family Storytime' (free, Apr 7) — a wonderful way to engage your kids in storytelling! It's perfect for your 3-year-old and 6-year-old to enjoy together.",
+    "latencyMs": 2140,
+    "relevanceScore": 3,
+    "completenessScore": 2,
+    "ageFitScore": 4,
+    "diagnosis": "pipeline_issue",
+    "judgeExplanation": "While the returned events were somewhat relevant, the chatbot missed several opportunities to present age-appropriate activities, like the Comic Book Art Class or RECESS!, which would appeal to both children based on their interests. A broader search could have yielded more fitting options."
   },
   {
     "id": 25,
@@ -712,31 +551,20 @@
     "query": "Something educational but fun for kids",
     "expectedIntent": "Educational events that are engaging (museums, STEM, workshops)",
     "extractedFilters": {
-      "categories": [
-        "science",
-        "children's activities",
-        "family"
-      ],
-      "ageMax": 10,
-      "priceMax": 50
+      "search": "educational"
     },
     "eventsReturned": 10,
     "topEvents": [
-      "Unity by Hard Rock",
-      "Landry's Select Club",
-      "DSW VIP Program"
+      "Family Storytime: Preschool Fun!",
+      "Earth Rocks!",
+      "Creatures of the Night: Bats"
     ],
-    "chatResponse": "",
-    "broaderSearchCount": 32,
-    "broaderSearchTopEvents": [
-      "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle",
-      "Seal Cruise",
-      "Earth Rocks!"
-    ],
+    "chatResponse": "Check out 'Lego Creation and Coloring Time' at the 53rd Street Library (free, Apr 3) — a fantastic hands-on session! Your kids can enjoy a creative and educational experience suitable for ages 5–12.",
+    "latencyMs": 4659,
     "relevanceScore": 4,
     "completenessScore": 3,
-    "ageFitScore": 4,
+    "ageFitScore": 5,
     "diagnosis": "partial_match",
-    "judgeExplanation": "Most of the events returned are relevant and fun, but there are some educational events in the broader search that weren't included in the initial results. The age fit is good for Emma and Leo, but additional events could enhance the selection."
+    "judgeExplanation": "While the response included relevant events, it missed several educational options available in the broader search results, such as the 'Crazy Science Show' and 'Earthfest.' Overall, the age fit for both kids was perfect."
   }
 ]

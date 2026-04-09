@@ -98,6 +98,13 @@ export default function EventCardV2({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onClick={onClick}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        const id = String(event.id);
+        try { navigator.clipboard?.writeText(id); } catch {}
+        // eslint-disable-next-line no-alert
+        alert(`Event ID: ${id}\n(copied to clipboard)`);
+      }}
     >
       {/* ── Full-bleed image ── */}
       <div className="event-card-v2-image">

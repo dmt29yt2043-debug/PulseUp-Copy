@@ -58,6 +58,7 @@ export async function GET(req: NextRequest) {
     SELECT * FROM events
     WHERE status = 'published'
       AND (age_min IS NULL OR age_min <= ?)
+      AND (COALESCE(next_end_at, datetime(next_start_at, '+1 day')) >= datetime('now') OR next_start_at IS NULL)
     ORDER BY next_start_at ASC
     LIMIT 300
   `).all(ageRange.max) as Record<string, unknown>[];

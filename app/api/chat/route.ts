@@ -10,7 +10,7 @@ const openai = new OpenAI({
   timeout: 30000,
 });
 
-function buildSingleCallPrompt(profile?: UserProfile): string {
+function buildSingleCallPrompt(profile?: UserProfile, userMessage?: string): string {
   const now = new Date();
   const today = now.toISOString().split('T')[0];
   const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' });
@@ -42,8 +42,10 @@ function buildSingleCallPrompt(profile?: UserProfile): string {
     profileBlock = `\nUser has: ${kids}. Personalize recommendations.`;
   }
 
-  // Get event context for the AI to reference specific events
-  const eventsSummary = getEventsForChat();
+  // Get event context for the AI to reference specific events.
+  // Pass the raw user message so the SQL layer can pre-narrow the candidate
+  // set across the FULL dataset instead of always seeing the same top-N.
+  const eventsSummary = getEventsForChat(userMessage);
   const eventsBlock = eventsSummary.map((e) =>
     `[${e.id}] "${e.title}" | ${e.category_l1 || 'general'} | ${e.venue_name} | ${e.next_start_at} | ${e.is_free ? 'Free' : e.price_summary} | ${e.age_label}`
   ).join('\n');
@@ -134,7 +136,7 @@ Return ONLY the JSON object.`,
       response_format: { type: 'json_object' },
       max_tokens: 350,
       messages: [
-        { role: 'system', content: buildSingleCallPrompt(profile) },
+        { role: 'system', content: buildSingleCallPrompt(profile, message) },
         { role: 'user', content: message },
       ],
     });

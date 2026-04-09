@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Category {
   slug: string;
@@ -40,6 +40,21 @@ export default function WhatFilter({
     return states;
   });
   const [search, setSearch] = useState(initialSearch);
+
+  // Sync internal state when parent props change (e.g. global Reset)
+  useEffect(() => {
+    const states: Record<string, ChipState> = {};
+    categories.forEach((cat) => {
+      if (includedCategories.includes(cat.slug)) states[cat.slug] = 'include';
+      else if (excludedCategories.includes(cat.slug)) states[cat.slug] = 'exclude';
+      else states[cat.slug] = 'neutral';
+    });
+    setChipStates(states);
+  }, [includedCategories, excludedCategories, categories]);
+
+  useEffect(() => {
+    setSearch(initialSearch);
+  }, [initialSearch]);
 
   const cycleState = (slug: string) => {
     setChipStates((prev) => {
