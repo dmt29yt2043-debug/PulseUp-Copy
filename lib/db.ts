@@ -136,7 +136,8 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
 
   if (filters.priceMin !== undefined) {
     params.price_min = filters.priceMin;
-    conditions.push('price_max >= @price_min');
+    // Exclude free events when user sets a minimum price, even if they have paid tiers
+    conditions.push('(price_max >= @price_min AND (is_free = 0 OR is_free IS NULL))');
   }
 
   if (filters.priceMax !== undefined) {
