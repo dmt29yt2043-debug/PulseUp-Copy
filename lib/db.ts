@@ -135,7 +135,14 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
 
   if (filters.ageMax !== undefined) {
     params.age_max = filters.ageMax;
-    conditions.push('(age_min IS NULL OR age_min <= @age_max)');
+    // Child's age must fall within the event's age range:
+    // - age_best_from (or age_min) <= child_age  → child is old enough
+    // - age_best_to >= child_age                 → child isn't too old
+    // Events with no age data (all NULLs) pass through.
+    conditions.push(
+      '((COALESCE(age_best_from, age_min) IS NULL OR COALESCE(age_best_from, age_min) <= @age_max)' +
+      ' AND (age_best_to IS NULL OR age_best_to >= @age_max))'
+    );
   }
 
   if (filters.dateFrom) {

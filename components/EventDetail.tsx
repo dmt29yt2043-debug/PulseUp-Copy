@@ -23,6 +23,45 @@ function formatDateShort(dateStr: string): string {
   }
 }
 
+/**
+ * Smart date display for the detail card meta bar.
+ * - Single day or no end       → "Apr 19, 2026"
+ * - Multi-day short (≤7d)      → "Apr 19 – Apr 25"
+ * - Long-running (>7d, future) → "Through Dec 31"
+ * - Already started & ongoing  → "Now – Dec 31"  (if start is in the past)
+ */
+function formatDateSmart(startStr: string, endStr?: string | null): { label: string; value: string } {
+  if (!startStr) return { label: 'DATE', value: '—' };
+  try {
+    const start = new Date(startStr);
+    const now = new Date();
+    const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const fmtFull = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    if (!endStr) return { label: 'DATE', value: fmtFull(start) };
+
+    const end = new Date(endStr);
+    const diffDays = Math.round((end.getTime() - start.getTime()) / 86_400_000);
+
+    // Same day event
+    if (diffDays <= 0) return { label: 'DATE', value: fmtFull(start) };
+
+    // Short run (≤7 days)
+    if (diffDays <= 7) {
+      return { label: 'DATES', value: `${fmt(start)} – ${fmt(end)}` };
+    }
+
+    // Long-running: show availability window
+    const started = start.getTime() < now.getTime();
+    if (started) {
+      return { label: 'AVAILABLE', value: `Now – ${fmt(end)}` };
+    }
+    return { label: 'DATES', value: `${fmt(start)} – ${fmt(end)}` };
+  } catch {
+    return { label: 'DATE', value: startStr };
+  }
+}
+
 function formatTime(dateStr: string): string {
   if (!dateStr) return '—';
   try {
@@ -46,8 +85,9 @@ function priceLabel(event: Event): string {
 /* ── sub-components ── */
 
 function MetaBar({ event }: { event: Event }) {
+  const dateMeta = formatDateSmart(event.next_start_at, event.next_end_at);
   const cols = [
-    { label: 'DATE', value: formatDateShort(event.next_start_at) },
+    { label: dateMeta.label, value: dateMeta.value },
     { label: 'START TIME', value: formatTime(event.next_start_at) },
     { label: 'AGE GROUP', value: event.age_label || 'All Ages' },
     { label: 'PRICE', value: priceLabel(event) },

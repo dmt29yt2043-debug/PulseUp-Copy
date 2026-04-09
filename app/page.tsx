@@ -61,6 +61,8 @@ function formatWhere(filters: FilterState): string {
 
 function formatBudget(filters: FilterState): string {
   if (filters.isFree) return 'Free only';
+  if (filters.priceMin !== undefined && filters.priceMax !== undefined) return `$${filters.priceMin} - $${filters.priceMax}`;
+  if (filters.priceMin !== undefined) return `From $${filters.priceMin}`;
   if (filters.priceMax !== undefined) return `Up to $${filters.priceMax}`;
   return 'Any budget';
 }
@@ -97,8 +99,9 @@ function HomeInner() {
   }, []);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
 
-  // Price range slider
-  const [priceSlider, setPriceSlider] = useState(200);
+  // Price range slider (dual handles)
+  const [priceSliderMin, setPriceSliderMin] = useState(0);
+  const [priceSliderMax, setPriceSliderMax] = useState(200);
   const [chatResetKey, setChatResetKey] = useState(0);
 
   // Discovery state
@@ -231,9 +234,16 @@ function HomeInner() {
 
   const handleFilterReset = useCallback(() => {
     track('filter_applied', { filter_name: 'reset', filter_value: 'all' });
-    setFilters({});
+    // Preserve age/children — user clears them only via "Clear" in Who dialog
+    setFilters((prev) => {
+      const kept: FilterState = {};
+      if (prev.ageMax !== undefined) kept.ageMax = prev.ageMax;
+      if (prev.filterChildren) kept.filterChildren = prev.filterChildren;
+      return kept;
+    });
     setPage(1);
-    setPriceSlider(850);
+    setPriceSliderMin(0);
+    setPriceSliderMax(200);
     setActiveTab('feed');
     setChatResetKey((k) => k + 1);
   }, []);
@@ -299,6 +309,7 @@ function HomeInner() {
         search: search || undefined,
       }));
       setPage(1);
+      setActiveTab('foryou');
       setOpenFilter(null);
     },
     []
@@ -312,6 +323,7 @@ function HomeInner() {
       dateTo: dateTo || undefined,
     }));
     setPage(1);
+    if (dateFrom || dateTo) setActiveTab('foryou');
     setOpenFilter(null);
   }, []);
 
@@ -343,36 +355,54 @@ function HomeInner() {
 
   const handleWhereApply = useCallback((neighborhoods: string[]) => {
     track('filter_applied', { filter_name: 'where', filter_value: { neighborhoods } });
+    const hasNeighborhoods = neighborhoods.length > 0 && !neighborhoods.includes('Anywhere in NYC');
     setFilters((prev) => ({
       ...prev,
-      neighborhoods: neighborhoods.length > 0 && !neighborhoods.includes('Anywhere in NYC')
-        ? neighborhoods
-        : undefined,
+      neighborhoods: hasNeighborhoods ? neighborhoods : undefined,
     }));
     setPage(1);
     setOpenFilter(null);
+    if (hasNeighborhoods) setActiveTab('foryou');
   }, []);
 
-  // Price slider handler
-  const handlePriceSliderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Number(e.target.value);
-    setPriceSlider(val);
-  }, []);
+  // Price slider handlers (dual range)
+  const handlePriceMinChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Math.min(Number(e.target.value), priceSliderMax);
+    setPriceSliderMin(val);
+  }, [priceSliderMax]);
+
+  const handlePriceMaxChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Math.max(Number(e.target.value), priceSliderMin);
+    setPriceSliderMax(val);
+  }, [priceSliderMin]);
 
   const handlePriceSliderCommit = useCallback(() => {
+    const hasMin = priceSliderMin > 0;
+    const hasMax = priceSliderMax < 200;
     setFilters((prev) => ({
       ...prev,
-      priceMax: priceSlider < 200 ? priceSlider : undefined,
+      priceMin: hasMin ? priceSliderMin : undefined,
+      priceMax: hasMax ? priceSliderMax : undefined,
     }));
     setPage(1);
-  }, [priceSlider]);
+    if (hasMin || hasMax) setActiveTab('foryou');
+  }, [priceSliderMin, priceSliderMax]);
 
   const forYouEvents = boundsFiltered ? filteredEvents : events;
-  const baseEvents = activeTab === 'feed' ? allEvents : forYouEvents;
+  // If any filter is active, BOTH tabs use filtered results. Feed only shows
+  // unfiltered allEvents when zero filters are set.
+  const hasActiveFilters = !!(
+    filters.categories?.length || filters.excludeCategories?.length ||
+    filters.priceMin !== undefined || filters.priceMax !== undefined || filters.isFree ||
+    filters.ageMax !== undefined || filters.dateFrom || filters.dateTo ||
+    filters.search || filters.neighborhoods?.length
+  );
+  const baseEvents = (activeTab === 'feed' && !hasActiveFilters) ? allEvents : forYouEvents;
   const displayEvents = favoritesOnly ? favoriteEvents : baseEvents;
-  const displayTotal  = favoritesOnly ? favoriteIds.size : activeTab === 'feed' ? allTotal : total;
+  const displayTotal  = favoritesOnly ? favoriteIds.size : (activeTab === 'feed' && !hasActiveFilters) ? allTotal : total;
 
-  const sliderPct = Math.round((priceSlider / 850) * 100);
+  const sliderMinPct = Math.round((priceSliderMin / 200) * 100);
+  const sliderMaxPct = Math.round((priceSliderMax / 200) * 100);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
@@ -440,25 +470,44 @@ function HomeInner() {
           <div className="v2-sidebar-filters">
             <div className="v2-sidebar-filters-label">Refine Search</div>
 
-            {/* Price Range Slider */}
+            {/* Price Range Slider (dual handle) */}
             <div className="v2-price-range">
               <div className="v2-price-range-header">
                 <span className="v2-price-range-label">Price Range</span>
                 <span className="v2-price-range-value">
-                  $0 &ndash; ${priceSlider >= 200 ? '200+' : priceSlider}
+                  ${priceSliderMin} &ndash; ${priceSliderMax >= 200 ? '200+' : priceSliderMax}
                 </span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="200"
-                value={priceSlider}
-                onChange={handlePriceSliderChange}
-                onMouseUp={handlePriceSliderCommit}
-                onTouchEnd={handlePriceSliderCommit}
-                className="v2-price-slider"
-                style={{ '--slider-pct': `${sliderPct}%` } as React.CSSProperties}
-              />
+              <div
+                className="v2-dual-range"
+                style={{
+                  '--range-min': `${sliderMinPct}%`,
+                  '--range-max': `${sliderMaxPct}%`,
+                } as React.CSSProperties}
+              >
+                <div className="v2-dual-range-track" />
+                <div className="v2-dual-range-fill" />
+                <input
+                  type="range"
+                  min="0"
+                  max="200"
+                  value={priceSliderMin}
+                  onChange={handlePriceMinChange}
+                  onMouseUp={handlePriceSliderCommit}
+                  onTouchEnd={handlePriceSliderCommit}
+                  className="v2-price-slider v2-price-slider--min"
+                />
+                <input
+                  type="range"
+                  min="0"
+                  max="200"
+                  value={priceSliderMax}
+                  onChange={handlePriceMaxChange}
+                  onMouseUp={handlePriceSliderCommit}
+                  onTouchEnd={handlePriceSliderCommit}
+                  className="v2-price-slider v2-price-slider--max"
+                />
+              </div>
             </div>
 
             {/* What filter */}
@@ -522,7 +571,7 @@ function HomeInner() {
             </div>
 
             {/* Reset button */}
-            {(filters.categories || filters.priceMax !== undefined || filters.dateFrom || filters.ageMax !== undefined || filters.isFree || filters.neighborhoods) && (
+            {(filters.categories || filters.priceMin !== undefined || filters.priceMax !== undefined || filters.dateFrom || filters.ageMax !== undefined || filters.isFree || filters.neighborhoods) && (
               <button
                 onClick={handleFilterReset}
                 className="mt-2 w-full text-center text-xs py-1.5 rounded-lg transition-colors"
@@ -671,6 +720,14 @@ function HomeInner() {
           ageMax={filters.ageMax}
           children={filters.filterChildren}
           onApply={handleWhoApply}
+          onRemember={(kids) => {
+            try {
+              const stored = localStorage.getItem('pulseup_profile');
+              const profile = stored ? JSON.parse(stored) : {};
+              profile.children = kids.map((c) => ({ age: c.age, gender: c.gender, interests: [] }));
+              localStorage.setItem('pulseup_profile', JSON.stringify(profile));
+            } catch { /* ignore */ }
+          }}
           onClose={() => setOpenFilter(null)}
         />
       )}

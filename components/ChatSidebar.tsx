@@ -114,15 +114,8 @@ export default function ChatSidebar({ filters, onFiltersChange, onEventClick }: 
     if (p.children && p.children.length > 0) {
       newFilters.ageMax = Math.max(...p.children.map((c) => c.age));
 
-      const allInterests = new Set<string>();
-      p.children.forEach((c) => c.interests.forEach((i) => allInterests.add(i)));
-      if (allInterests.size > 0) {
-        const cats = new Set<string>();
-        allInterests.forEach((i) => {
-          (INTEREST_TO_CATEGORIES[i] || []).forEach((c) => cats.add(c));
-        });
-        if (cats.size > 0) newFilters.categories = [...cats];
-      }
+      // Profile interests are used for chat context only — don't auto-apply
+      // categories so the "What" filter stays at the default "Activities".
     }
 
     if (p.neighborhoods && p.neighborhoods.length > 0 && !p.neighborhoods.includes('Anywhere in NYC')) {

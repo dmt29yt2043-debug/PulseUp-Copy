@@ -11,6 +11,7 @@ interface WhoFilterProps {
   ageMax?: number;
   children?: Child[];
   onApply: (ageMax?: number, children?: Child[]) => void;
+  onRemember: (children: Child[]) => void;
   onClose: () => void;
 }
 
@@ -20,7 +21,7 @@ const GENDER_LABELS: Record<Child['gender'], string> = {
   other: '🧒 Other',
 };
 
-export default function WhoFilter({ ageMax: initialAge, children: initialChildren, onApply, onClose }: WhoFilterProps) {
+export default function WhoFilter({ ageMax: initialAge, children: initialChildren, onApply, onRemember, onClose }: WhoFilterProps) {
   const [children, setChildren] = useState<Child[]>(
     initialChildren && initialChildren.length > 0
       ? initialChildren
@@ -130,6 +131,12 @@ export default function WhoFilter({ ageMax: initialAge, children: initialChildre
             className="flex-1 py-2 px-4 rounded-lg border border-[rgba(255,255,255,0.15)] text-sm font-medium text-gray-400 hover:bg-[rgba(255,255,255,0.05)]"
           >
             Clear
+          </button>
+          <button
+            onClick={() => { handleApply(); if (children.length > 0) onRemember(children); }}
+            className="flex-1 py-2 px-4 rounded-lg border border-[rgba(255,255,255,0.15)] text-sm font-medium text-gray-300 hover:bg-[rgba(255,255,255,0.05)]"
+          >
+            Remember
           </button>
           <button
             onClick={handleApply}
