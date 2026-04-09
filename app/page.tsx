@@ -323,7 +323,7 @@ function HomeInner() {
       dateTo: dateTo || undefined,
     }));
     setPage(1);
-    if (dateFrom || dateTo) setActiveTab('foryou');
+    setActiveTab('foryou');
     setOpenFilter(null);
   }, []);
 
@@ -336,6 +336,7 @@ function HomeInner() {
         isFree,
       }));
       setPage(1);
+      setActiveTab('foryou');
       setOpenFilter(null);
     },
     []
@@ -349,7 +350,7 @@ function HomeInner() {
       filterChildren,
     }));
     setPage(1);
-    if (ageMax !== undefined) setActiveTab('foryou');
+    setActiveTab('foryou');
     setOpenFilter(null);
   }, []);
 
@@ -362,7 +363,7 @@ function HomeInner() {
     }));
     setPage(1);
     setOpenFilter(null);
-    if (hasNeighborhoods) setActiveTab('foryou');
+    setActiveTab('foryou');
   }, []);
 
   // Price slider handlers (dual range)
@@ -385,21 +386,14 @@ function HomeInner() {
       priceMax: hasMax ? priceSliderMax : undefined,
     }));
     setPage(1);
-    if (hasMin || hasMax) setActiveTab('foryou');
+    setActiveTab('foryou');
   }, [priceSliderMin, priceSliderMax]);
 
   const forYouEvents = boundsFiltered ? filteredEvents : events;
-  // If any filter is active, BOTH tabs use filtered results. Feed only shows
-  // unfiltered allEvents when zero filters are set.
-  const hasActiveFilters = !!(
-    filters.categories?.length || filters.excludeCategories?.length ||
-    filters.priceMin !== undefined || filters.priceMax !== undefined || filters.isFree ||
-    filters.ageMax !== undefined || filters.dateFrom || filters.dateTo ||
-    filters.search || filters.neighborhoods?.length
-  );
-  const baseEvents = (activeTab === 'feed' && !hasActiveFilters) ? allEvents : forYouEvents;
+  // Feed always shows ALL events; For You shows filtered results.
+  const baseEvents = activeTab === 'feed' ? allEvents : forYouEvents;
   const displayEvents = favoritesOnly ? favoriteEvents : baseEvents;
-  const displayTotal  = favoritesOnly ? favoriteIds.size : (activeTab === 'feed' && !hasActiveFilters) ? allTotal : total;
+  const displayTotal  = favoritesOnly ? favoriteIds.size : activeTab === 'feed' ? allTotal : total;
 
   const sliderMinPct = Math.round((priceSliderMin / 200) * 100);
   const sliderMaxPct = Math.round((priceSliderMax / 200) * 100);

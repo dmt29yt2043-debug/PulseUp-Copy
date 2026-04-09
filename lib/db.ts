@@ -82,27 +82,43 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
     'title NOT LIKE \'%Loyalty%\'',
     'title NOT LIKE \'%Club Baja%\'',
     'title NOT LIKE \'%Join Club%\'',
-    '(category_l1 IS NULL OR category_l1 NOT IN (\'food\', \'networking\'))',
+    '(category_l1 IS NULL OR category_l1 NOT IN (\'networking\'))',
     // Hide past events: keep if it hasn't ended yet (or, if no end time, hasn't started > 1 day ago)
     "(COALESCE(next_end_at, datetime(next_start_at, '+1 day')) >= datetime('now') OR next_start_at IS NULL)",
   ];
   const params: Record<string, unknown> = {};
 
-  // DB has legacy category values — map canonical names to all known DB variants
+  // Map canonical filter slugs to all known DB variants (category_l1, categories JSON, tags)
   const CAT_ALIASES: Record<string, string[]> = {
-    'arts': ['arts', 'Art'],
-    'family': ['family', "Children's Activities"],
+    'arts': ['arts', 'Art', 'art', 'Arts & Crafts', 'Painting', 'creativity'],
+    'family': ['family', "Children's Activities", 'Family Activities', 'Family Events', 'Kids Activities'],
+    'nature': ['outdoors', 'nature', 'park', 'garden', 'hiking', 'wildlife'],
+    'science': ['science', 'STEAM', 'STEM', 'Science'],
+    'food': ['food', 'cooking', 'culinary', 'dining', 'Dining', 'Food'],
+    'outdoors': ['outdoors', 'outdoor', 'nature', 'park', 'garden', 'hiking'],
+    'education': ['education', 'learning', 'educational', 'workshop'],
+    'music': ['music', 'concert', 'musical', 'Music'],
+    'film': ['film', 'movie', 'cinema', 'Film'],
+    'community': ['community', 'volunteer', 'Community'],
+    'gaming': ['gaming', 'games', 'Gaming'],
+    'networking': ['networking', 'Networking'],
+    'sports': ['sports', 'Sports', 'fitness', 'athletic', 'Basketball', 'Soccer'],
+    'theater': ['theater', 'Theatre', 'Theater', 'Performing Arts', 'Broadway'],
+    'attractions': ['attractions', 'Attractions', 'museum', 'exhibit'],
+    'books': ['books', 'Literary', 'reading', 'Reading', 'library'],
+    'holiday': ['holiday', 'Holiday', 'seasonal', 'Seasonal'],
   };
 
   if (filters.categories && filters.categories.length > 0) {
     const catConditions = filters.categories.map((cat, i) => {
       const aliases = CAT_ALIASES[cat] || [cat];
-      const aliasConds = aliases.map((alias, j) => {
-        params[`cat_${i}_${j}`] = `%"${alias}"%`;
+      const matchConds = aliases.map((alias, j) => {
+        params[`cat_${i}_${j}`] = `%${alias}%`;
         params[`cat_exact_${i}_${j}`] = alias;
-        return `(categories LIKE @cat_${i}_${j} OR category_l1 = @cat_exact_${i}_${j})`;
+        // Search across category_l1, categories JSON, AND tags
+        return `(category_l1 = @cat_exact_${i}_${j} OR categories LIKE @cat_${i}_${j} OR tags LIKE @cat_${i}_${j})`;
       });
-      return `(${aliasConds.join(' OR ')})`;
+      return `(${matchConds.join(' OR ')})`;
     });
     conditions.push(`(${catConditions.join(' OR ')})`);
   }
@@ -111,9 +127,9 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
     filters.excludeCategories.forEach((cat, i) => {
       const aliases = CAT_ALIASES[cat] || [cat];
       aliases.forEach((alias, j) => {
-        params[`excat_${i}_${j}`] = `%"${alias}"%`;
+        params[`excat_${i}_${j}`] = `%${alias}%`;
         params[`excat_exact_${i}_${j}`] = alias;
-        conditions.push(`(categories NOT LIKE @excat_${i}_${j} AND category_l1 != @excat_exact_${i}_${j})`);
+        conditions.push(`(category_l1 != @excat_exact_${i}_${j} AND categories NOT LIKE @excat_${i}_${j} AND tags NOT LIKE @excat_${i}_${j})`);
       });
     });
   }
@@ -266,7 +282,7 @@ export function getCategories(): { value: string; label: string }[] {
   const rows = db.prepare('SELECT DISTINCT category_l1 FROM events WHERE category_l1 IS NOT NULL AND status IN (\'published\', \'done\', \'new\') ORDER BY category_l1').all() as { category_l1: string }[];
 
   const labelMap: Record<string, string> = {
-    family: 'Family & Kids',
+    family: 'Parents & Kids',
     arts: 'Arts & Culture',
     theater: 'Theater & Performing Arts',
     attractions: 'Attractions & Activities',
@@ -274,12 +290,12 @@ export function getCategories(): { value: string; label: string }[] {
     holiday: 'Holiday & Seasonal',
     sports: 'Sports & Fitness',
     Art: 'Arts & Culture',
-    "Children's Activities": 'Family & Kids',
+    "Children's Activities": 'Parents & Kids',
   };
 
   // Preferred canonical value for each label (used when deduplicating)
   const canonicalValue: Record<string, string> = {
-    'Family & Kids': 'family',
+    'Parents & Kids': 'family',
     'Arts & Culture': 'arts',
   };
 
@@ -296,13 +312,18 @@ export function getCategories(): { value: string; label: string }[] {
     result.push({ value, label });
   }
 
+  // Virtual categories (not a direct category_l1 in DB)
+  if (!seen.has('Nature')) {
+    result.push({ value: 'nature', label: 'Nature' });
+  }
+
   return result;
 }
 
 export function getEventsForChat(query?: string): { id: number; title: string; category_l1: string; tagline: string; venue_name: string; next_start_at: string; is_free: boolean; price_summary: string; age_label: string; city: string; address: string }[] {
   const db = getDb();
 
-  const baseWhere = `status IN ('published', 'done', 'new') AND title NOT LIKE '%Rewards%' AND title NOT LIKE '%Royalty%' AND title NOT LIKE '%Loyalty%' AND title NOT LIKE '%Club Baja%' AND title NOT LIKE '%Join Club%' AND (category_l1 IS NULL OR category_l1 NOT IN ('food', 'networking')) AND (COALESCE(next_end_at, datetime(next_start_at, '+1 day')) >= datetime('now') OR next_start_at IS NULL)`;
+  const baseWhere = `status IN ('published', 'done', 'new') AND title NOT LIKE '%Rewards%' AND title NOT LIKE '%Royalty%' AND title NOT LIKE '%Loyalty%' AND title NOT LIKE '%Club Baja%' AND title NOT LIKE '%Join Club%' AND (category_l1 IS NULL OR category_l1 NOT IN ('networking')) AND (COALESCE(next_end_at, datetime(next_start_at, '+1 day')) >= datetime('now') OR next_start_at IS NULL)`;
   const fields = `id, title, category_l1, tagline, venue_name, next_start_at, is_free, price_summary, age_label, city, address`;
 
   let searchWhere = '';

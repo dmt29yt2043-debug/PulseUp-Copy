@@ -24,7 +24,7 @@ const INTEREST_TO_CATEGORIES: Record<string, string[]> = {
   film:        ['film'],
   gaming:      ['gaming'],
   art:         ['Art', 'arts'],
-  family:      ['family', 'Family & Kids', "Children's Activities"],
+  family:      ['family', 'Parents & Kids', 'Family & Kids', "Children's Activities"],
   holiday:     ['holiday', 'Holiday & Seasonal'],
   attractions: ['attractions', 'Attractions & Activities'],
 };
