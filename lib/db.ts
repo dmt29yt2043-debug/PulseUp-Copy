@@ -4,12 +4,13 @@ import type { Event, FilterState } from './types';
 
 const NEIGHBORHOOD_BOUNDS: Record<string, { latMin: number; latMax: number; lonMin: number; lonMax: number }> = {
   'Upper Manhattan': { latMin: 40.80, latMax: 40.88, lonMin: -73.97, lonMax: -73.91 },
-  'Midtown': { latMin: 40.74, latMax: 40.80, lonMin: -74.01, lonMax: -73.95 },
+  'Midtown':         { latMin: 40.74, latMax: 40.80, lonMin: -74.01, lonMax: -73.95 },
   'Lower Manhattan': { latMin: 40.70, latMax: 40.74, lonMin: -74.02, lonMax: -73.97 },
-  'Brooklyn': { latMin: 40.57, latMax: 40.74, lonMin: -74.04, lonMax: -73.83 },
-  'Queens': { latMin: 40.54, latMax: 40.80, lonMin: -73.96, lonMax: -73.70 },
-  'Bronx': { latMin: 40.80, latMax: 40.92, lonMin: -73.93, lonMax: -73.75 },
-  'Staten Island': { latMin: 40.49, latMax: 40.65, lonMin: -74.26, lonMax: -74.05 },
+  'Manhattan':       { latMin: 40.70, latMax: 40.88, lonMin: -74.02, lonMax: -73.91 },
+  'Brooklyn':        { latMin: 40.57, latMax: 40.74, lonMin: -74.04, lonMax: -73.83 },
+  'Queens':          { latMin: 40.54, latMax: 40.80, lonMin: -73.96, lonMax: -73.70 },
+  'Bronx':           { latMin: 40.80, latMax: 40.92, lonMin: -73.93, lonMax: -73.75 },
+  'Staten Island':   { latMin: 40.49, latMax: 40.65, lonMin: -74.26, lonMax: -74.05 },
 };
 
 const DB_PATH = path.join(process.cwd(), 'data', 'events.db');
@@ -134,9 +135,9 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
     });
   }
 
-  if (filters.priceMin !== undefined) {
+  if (filters.priceMin !== undefined && filters.priceMin > 0) {
     params.price_min = filters.priceMin;
-    // Exclude free events when user sets a minimum price, even if they have paid tiers
+    // Exclude free events when user sets a minimum price > 0, even if they have paid tiers
     conditions.push('(price_max >= @price_min AND (is_free = 0 OR is_free IS NULL))');
   }
 
@@ -208,10 +209,14 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
       params[`nb_text_${i}`] = `%${nb}%`;
       textConds.push(`(city LIKE @nb_text_${i} OR address LIKE @nb_text_${i} OR venue_name LIKE @nb_text_${i})`);
     });
+    // Events WITH coordinates: match by bounding box only
+    // Events WITHOUT coordinates: fall back to text matching on city/address/venue
     const geoCond = nbConds.length > 0
       ? `(lat IS NOT NULL AND lon IS NOT NULL AND (${nbConds.join(' OR ')}))`
       : '';
-    const txtCond = textConds.length > 0 ? `(${textConds.join(' OR ')})` : '';
+    const txtCond = textConds.length > 0
+      ? `(lat IS NULL OR lon IS NULL) AND (${textConds.join(' OR ')})`
+      : '';
     const combined = [geoCond, txtCond].filter(Boolean).join(' OR ');
     if (combined) conditions.push(`(${combined})`);
   }
