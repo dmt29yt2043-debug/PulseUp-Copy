@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { getEvents, getEventsForChat } from '@/lib/db';
+import { getEvents, getEventsForChat, getCategories } from '@/lib/db';
 import type { FilterState, ChatMessage, UserProfile } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -7,93 +7,87 @@ export const maxDuration = 60;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-  timeout: 60000,
+  timeout: 30000,
 });
 
-const SYSTEM_PROMPT = `You are an event discovery assistant for PulseUp, helping users find activities and events in New York City for families and kids.
+function buildSingleCallPrompt(profile?: UserProfile, userMessage?: string): string {
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' });
 
-CRITICAL RESPONSE FORMAT RULES:
-- Keep your text response to 1-3 SHORT sentences maximum. The event details are shown as visual cards below your message — do NOT list events in your text.
-- Your job is to give a brief, friendly summary like: "I found 6 theater shows coming up! Here are the best picks for your kids." or "Great news — there are free art classes this weekend near you!"
-- NEVER list event names, dates, venues, or prices in your text. The cards handle that.
-- If no events match, suggest broadening the search in 1-2 sentences.
-- If the request is vague, ask ONE short clarifying question.
+  let categoryList: string;
+  try {
+    const cats = getCategories();
+    categoryList = cats.map((c) => c.value).join(', ');
+  } catch {
+    categoryList = 'family, arts, theater, attractions, books, holiday, sports, music, science, film, gaming, community';
+  }
 
-When a user describes what they're looking for, extract structured filters from their message.
+  const tomorrow = new Date(now.getTime() + 86400000).toISOString().split('T')[0];
+  const satOffset = (6 - now.getDay() + 7) % 7 || 7;
+  const sunOffset = (7 - now.getDay()) % 7 || 7;
+  const nextMonOffset = sunOffset + 1;
+  const saturday = (() => { const d = new Date(now); d.setDate(d.getDate() + satOffset); return d.toISOString().split('T')[0]; })();
+  const sunday = (() => { const d = new Date(now); d.setDate(d.getDate() + sunOffset); return d.toISOString().split('T')[0]; })();
+  const nextMonday = (() => { const d = new Date(now); d.setDate(d.getDate() + nextMonOffset); return d.toISOString().split('T')[0]; })();
+  const thisWeekSunday = sunday;
 
-Available categories: family, arts, theater, attractions, books, holiday, sports, Art, Children's Activities
+  let profileBlock = '';
+  if (profile && 'children' in profile && Array.isArray(profile.children)) {
+    const kids = profile.children.map((c) => {
+      const g = c.gender === 'girl' ? 'daughter' : c.gender === 'boy' ? 'son' : 'child';
+      const interests = c.interests?.length ? ` (${c.interests.join(', ')})` : '';
+      return `${g} ${c.age}yo${interests}`;
+    }).join(', ');
+    profileBlock = `\nUser has: ${kids}. Personalize recommendations.`;
+  }
 
-Filter field names:
-- categories: array of category strings to include
-- excludeCategories: array of category strings to exclude
-- priceMin: minimum price (number)
-- priceMax: maximum price (number)
-- isFree: true if user wants free events only
-- ageMax: maximum age the user mentioned (to find age-appropriate events)
-- dateFrom: ISO date string for start of date range
-- dateTo: ISO date string for end of date range
-- search: text search query for specific topics/keywords`;
+  // Get event context for the AI to reference specific events.
+  // Pass the raw user message so the SQL layer can pre-narrow the candidate
+  // set across the FULL dataset instead of always seeing the same top-N.
+  const eventsSummary = getEventsForChat(userMessage);
+  const eventsBlock = eventsSummary.map((e) =>
+    `[${e.id}] "${e.title}" | ${e.category_l1 || 'general'} | ${e.venue_name} | ${e.next_start_at} | ${e.is_free ? 'Free' : e.price_summary} | ${e.age_label}`
+  ).join('\n');
 
-const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
-  {
-    type: 'function',
-    function: {
-      name: 'extract_filters',
-      description: 'Extract event search filters from the user message. Call this to find matching events based on what the user is looking for.',
-      parameters: {
-        type: 'object',
-        properties: {
-          categories: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'Event categories to filter by (e.g., "family", "arts", "theater", "attractions", "books", "holiday", "sports")',
-          },
-          excludeCategories: {
-            type: 'array',
-            items: { type: 'string' },
-            description: 'Event categories to exclude',
-          },
-          priceMin: {
-            type: 'number',
-            description: 'Minimum price filter',
-          },
-          priceMax: {
-            type: 'number',
-            description: 'Maximum price filter',
-          },
-          isFree: {
-            type: 'boolean',
-            description: 'Filter for free events only',
-          },
-          ageMax: {
-            type: 'number',
-            description: 'Maximum age for age-appropriate events',
-          },
-          dateFrom: {
-            type: 'string',
-            description: 'Start date in ISO format (YYYY-MM-DD)',
-          },
-          dateTo: {
-            type: 'string',
-            description: 'End date in ISO format (YYYY-MM-DD)',
-          },
-          search: {
-            type: 'string',
-            description: 'Free-text search query for specific topics or keywords',
-          },
-        },
-        required: [],
-        additionalProperties: false,
-      },
-    },
-  },
-];
+  return `You are PulseUp, an event discovery assistant for NYC families. Return a JSON object with "filters" and "message".
+
+TODAY: ${today} (${dayOfWeek}), year ${now.getFullYear()}.
+DATES: "tomorrow"=${tomorrow}. "this weekend"=dateFrom:"${saturday}",dateTo:"${sunday}". "this week"=dateFrom:"${today}",dateTo:"${thisWeekSunday}". "next week" starts ${nextMonday}. WEEKEND=Sat+Sun ONLY.
+${profileBlock}
+
+FILTER RULES:
+- Each message is a FRESH independent search. Extract ONLY what the user explicitly says.
+- "near me" = NO location filter. "in Brooklyn" = neighborhoods:["Brooklyn"].
+- No date mentioned = NO dateFrom/dateTo. "this weekend"/"tomorrow" = add date filter.
+- "free" = isFree:true.
+- Search keywords: SHORT (1-2 words). "Easter egg hunt" → search:"Easter". "science museums" → search:"science".
+- "wheelchair"/"accessible" → wheelchairAccessible:true. "stroller" → strollerFriendly:true.
+- FEWER filters is better than empty results.
+
+Available filter fields: categories(string[]), isFree(bool), ageMax(number), dateFrom(YYYY-MM-DD), dateTo(YYYY-MM-DD), search(string), neighborhoods(string[]), location(string), wheelchairAccessible(bool), strollerFriendly(bool)
+Categories: ${categoryList}
+Neighborhoods: "Upper Manhattan","Midtown","Lower Manhattan","Brooklyn","Queens","Bronx","Staten Island"
+Borough mapping: "Manhattan"→["Upper Manhattan","Midtown","Lower Manhattan"], "Brooklyn"→["Brooklyn"], etc.
+
+MESSAGE RULES:
+- 2-3 SHORT sentences. You MUST mention 1-2 specific event names from the list below.
+- Include key details (free/paid, date). Personalize for kids if profile provided.
+- NEVER say "I'll search", "stay tuned", or "let me know". You already HAVE the events — recommend them NOW.
+- Always start with a recommendation, e.g. "Check out 'Event Name' (free, Apr 12) — perfect for your 5-year-old!"
+
+Available events:
+${eventsBlock}
+
+RESPONSE FORMAT (JSON only):
+{"filters":{...},"message":"your 2-3 sentence response mentioning specific events"}`;
+}
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Mode: parse_children — lightweight LLM call to extract children from free text
+    // Mode: parse_children
     if (body.mode === 'parse_children') {
       const text = body.message as string;
       if (!text) return Response.json({ error: 'Message is required' }, { status: 400 });
@@ -108,10 +102,6 @@ export async function POST(request: Request) {
 Detect gender from keywords: daughter/son/girl/boy (also Russian: дочь/сын/девочка/мальчик).
 Each child object: { "age": number, "gender": "boy"|"girl"|"unknown", "name": string|null }
 If age is unclear, make a reasonable guess. If gender is unclear, use "unknown".
-Examples:
-- "daughter 6 and son 3" → {"children": [{"age": 6, "gender": "girl", "name": null}, {"age": 3, "gender": "boy", "name": null}]}
-- "дочка Маша 5 лет" → {"children": [{"age": 5, "gender": "girl", "name": "Маша"}]}
-- "2 kids ages 4 and 7" → {"children": [{"age": 4, "gender": "unknown", "name": null}, {"age": 7, "gender": "unknown", "name": null}]}
 Return ONLY the JSON object.`,
           },
           { role: 'user', content: text },
@@ -119,7 +109,6 @@ Return ONLY the JSON object.`,
       });
 
       const parsed = JSON.parse(parseResult.choices[0].message.content || '{"children": []}');
-      // Validate and sanitize
       const children = (parsed.children || []).map((c: Record<string, unknown>) => ({
         age: Math.max(0, Math.min(18, Number(c.age) || 5)),
         gender: ['boy', 'girl', 'unknown'].includes(c.gender as string) ? c.gender : 'unknown',
@@ -130,7 +119,7 @@ Return ONLY the JSON object.`,
       return Response.json({ children });
     }
 
-    const { message, filters: existingFilters, history, profile } = body as {
+    const { message, filters: existingFilters, profile } = body as {
       message: string;
       filters?: FilterState;
       history?: ChatMessage[];
@@ -141,152 +130,112 @@ Return ONLY the JSON object.`,
       return Response.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    // Build conversation messages
-    let systemContent = SYSTEM_PROMPT;
-    if (profile) {
-      // Support both old and new profile shapes
-      if ('children' in profile && Array.isArray(profile.children)) {
-        const childrenDesc = profile.children.map((c) => {
-          const genderEmoji = c.gender === 'girl' ? '👧' : c.gender === 'boy' ? '👦' : '🧒';
-          const name = c.name ? ` ${c.name}` : '';
-          const interests = c.interests.length > 0 ? ` — interests: ${c.interests.join(', ')}` : '';
-          return `${genderEmoji}${name} ${c.age}yo${interests}`;
-        }).join('\n');
-        const nbDesc = profile.neighborhoods?.length ? profile.neighborhoods.join(', ') : 'Anywhere in NYC';
-        const specialDesc = profile.specialNeeds ? `\n- Special needs: ${profile.specialNeeds}` : '';
-        systemContent += `\n\nUser profile:\n- Children:\n${childrenDesc}\n- Neighborhoods: ${nbDesc}\n- Budget: ${profile.budget}${specialDesc}\n\nUse this profile to personalize event recommendations.`;
-      } else {
-        // Legacy profile shape
-        const legacy = profile as unknown as { attendees?: string; childAges?: string; interests?: string; budget?: string };
-        systemContent += `\n\nUser profile:\n- Attendees: ${legacy.attendees}\n- Child ages: ${legacy.childAges || 'N/A'}\n- Interests: ${legacy.interests}\n- Budget: ${legacy.budget}\n\nUse this profile to personalize event recommendations.`;
-      }
-    }
-
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      { role: 'system', content: systemContent },
-    ];
-
-    // Add conversation history
-    if (history && history.length > 0) {
-      for (const msg of history) {
-        messages.push({
-          role: msg.role,
-          content: msg.content,
-        });
-      }
-    }
-
-    // Provide event context summary
-    const eventsSummary = getEventsForChat();
-    const contextMessage = `Here is a summary of available events:\n${eventsSummary
-      .map(
-        (e) =>
-          `- [${e.id}] ${e.title} | ${e.category_l1} | ${e.venue_name} | ${e.next_start_at} | ${e.is_free ? 'Free' : e.price_summary} | ${e.age_label}`
-      )
-      .join('\n')}`;
-
-    messages.push({
-      role: 'system',
-      content: contextMessage,
-    });
-
-    // Add current user message
-    if (existingFilters) {
-      messages.push({
-        role: 'user',
-        content: `${message}\n\n(Current active filters: ${JSON.stringify(existingFilters)})`,
-      });
-    } else {
-      messages.push({
-        role: 'user',
-        content: message,
-      });
-    }
-
-    // Call OpenAI with function calling
+    // ===== SINGLE API CALL: Extract filters + generate response =====
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
-      messages,
-      tools,
-      tool_choice: 'auto',
+      response_format: { type: 'json_object' },
+      max_tokens: 350,
+      messages: [
+        { role: 'system', content: buildSingleCallPrompt(profile, message) },
+        { role: 'user', content: message },
+      ],
     });
 
-    const responseMessage = completion.choices[0].message;
-
     let extractedFilters: FilterState = {};
-    let responseText = responseMessage.content || '';
+    let responseText = '';
 
-    // Check if the model called the extract_filters function
-    if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
-      // Find the extract_filters call
-      for (const tc of responseMessage.tool_calls) {
-        if (tc.type === 'function' && tc.function.name === 'extract_filters') {
-          try {
-            extractedFilters = JSON.parse(tc.function.arguments) as FilterState;
-          } catch {
-            // If parsing fails, use empty filters
-          }
-        }
-      }
-
-      // Get events with extracted filters
-      const eventsResult = getEvents({ ...extractedFilters, page: 1, page_size: 10 });
-
-      // Build tool responses for ALL tool_calls (OpenAI requires this)
-      const toolResponses: OpenAI.Chat.Completions.ChatCompletionMessageParam[] =
-        responseMessage.tool_calls
-          .filter((tc): tc is OpenAI.Chat.Completions.ChatCompletionMessageToolCall & { type: 'function' } => tc.type === 'function')
-          .map((tc) => ({
-            role: 'tool' as const,
-            tool_call_id: tc.id,
-            content: tc.function.name === 'extract_filters'
-              ? JSON.stringify({
-                  total: eventsResult.total,
-                  events: eventsResult.events.map((e) => ({
-                    id: e.id,
-                    title: e.title,
-                    tagline: e.tagline,
-                    venue_name: e.venue_name,
-                    next_start_at: e.next_start_at,
-                    is_free: e.is_free,
-                    price_summary: e.price_summary,
-                    age_label: e.age_label,
-                    rating_avg: e.rating_avg,
-                  })),
-                })
-              : JSON.stringify({ result: 'ok' }),
-          }));
-
-      // Call OpenAI again with all tool results to get a natural language response
-      const followUpMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-        ...messages,
-        responseMessage as OpenAI.Chat.Completions.ChatCompletionMessageParam,
-        ...toolResponses,
-      ];
-
-      const followUp = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: followUpMessages,
-      });
-
-      responseText = followUp.choices[0].message.content || '';
-
-      return Response.json({
-        message: responseText,
-        filters: extractedFilters,
-        events: eventsResult.events,
-      });
+    try {
+      const result = JSON.parse(completion.choices[0].message.content || '{}');
+      extractedFilters = result.filters || {};
+      responseText = result.message || '';
+    } catch {
+      responseText = 'Sorry, something went wrong. Please try again.';
     }
 
-    // If no tool call, return just the text response with existing filters
-    const eventsResult = existingFilters
-      ? getEvents({ ...existingFilters, page: 1, page_size: 10 })
-      : { events: [], total: 0 };
+    // Normalize location
+    if (extractedFilters.location) {
+      const loc = extractedFilters.location.toLowerCase().trim();
+      const stripTerms = ['new york city', 'nyc', 'new york, ny', 'new york city, ny', 'new york'];
+      if (stripTerms.includes(loc)) {
+        delete extractedFilters.location;
+      }
+      const boroughMap: Record<string, string[]> = {
+        'manhattan': ['Upper Manhattan', 'Midtown', 'Lower Manhattan'],
+        'brooklyn': ['Brooklyn'],
+        'queens': ['Queens'],
+        'bronx': ['Bronx'],
+        'the bronx': ['Bronx'],
+        'staten island': ['Staten Island'],
+        'midtown': ['Midtown'],
+        'upper manhattan': ['Upper Manhattan'],
+        'lower manhattan': ['Lower Manhattan'],
+        'downtown': ['Lower Manhattan'],
+        'uptown': ['Upper Manhattan'],
+      };
+      if (boroughMap[loc]) {
+        extractedFilters.neighborhoods = boroughMap[loc];
+        delete extractedFilters.location;
+      }
+    }
+
+    // Get events with extracted filters
+    let eventsResult = getEvents({ ...extractedFilters, page: 1, page_size: 10 });
+
+    // Auto-broaden: if 0 results, progressively remove restrictive filters
+    if (eventsResult.total === 0) {
+      const broadeningSteps: { label: string; modify: (f: FilterState) => FilterState }[] = [
+        {
+          label: 'location',
+          modify: (f) => { const nf = { ...f }; delete nf.neighborhoods; delete nf.location; return nf; },
+        },
+        {
+          label: 'dates',
+          modify: (f) => { const nf = { ...f }; delete nf.dateFrom; delete nf.dateTo; return nf; },
+        },
+        {
+          label: 'categories',
+          modify: (f) => { const nf = { ...f }; delete nf.categories; return nf; },
+        },
+        {
+          label: 'all filters',
+          modify: (f) => {
+            const nf: FilterState = {};
+            if (f.search) nf.search = f.search;
+            if (f.ageMax !== undefined) nf.ageMax = f.ageMax;
+            return nf;
+          },
+        },
+        {
+          label: 'search simplification',
+          modify: (f) => {
+            const nf: FilterState = {};
+            if (f.search && f.search.includes(' ')) {
+              const words = f.search.split(/\s+/).filter(w => w.length > 3);
+              nf.search = words.length > 0 ? words[0] : f.search.split(/\s+/)[0];
+            }
+            if (f.ageMax !== undefined) nf.ageMax = f.ageMax;
+            return nf;
+          },
+        },
+      ];
+
+      let currentFilters = { ...extractedFilters };
+      for (const step of broadeningSteps) {
+        currentFilters = step.modify(currentFilters);
+        const tryResult = getEvents({ ...currentFilters, page: 1, page_size: 10 });
+        if (tryResult.total > 0) {
+          eventsResult = tryResult;
+          extractedFilters = currentFilters;
+          break;
+        }
+      }
+    }
 
     return Response.json({
       message: responseText,
-      filters: existingFilters || {},
+      filters: extractedFilters,
       events: eventsResult.events,
+      total: eventsResult.total,
     });
   } catch (error) {
     console.error('Error in chat:', error);

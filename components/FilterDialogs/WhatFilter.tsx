@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Category {
   slug: string;
@@ -41,6 +41,21 @@ export default function WhatFilter({
   });
   const [search, setSearch] = useState(initialSearch);
 
+  // Sync internal state when parent props change (e.g. global Reset)
+  useEffect(() => {
+    const states: Record<string, ChipState> = {};
+    categories.forEach((cat) => {
+      if (includedCategories.includes(cat.slug)) states[cat.slug] = 'include';
+      else if (excludedCategories.includes(cat.slug)) states[cat.slug] = 'exclude';
+      else states[cat.slug] = 'neutral';
+    });
+    setChipStates(states);
+  }, [includedCategories, excludedCategories, categories]);
+
+  useEffect(() => {
+    setSearch(initialSearch);
+  }, [initialSearch]);
+
   const cycleState = (slug: string) => {
     setChipStates((prev) => {
       const current = prev[slug] || 'neutral';
@@ -72,7 +87,7 @@ export default function WhatFilter({
   return (
     <div className="filter-dialog-backdrop" onClick={onClose}>
       <div className="filter-dialog" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold mb-4">What are you looking for?</h3>
+        <h3 className="text-lg font-semibold mb-4 text-white">What are you looking for?</h3>
 
         <div className="mb-4">
           <input
@@ -80,7 +95,7 @@ export default function WhatFilter({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search keywords..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#e91e63]"
+            className="w-full px-3 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg text-sm focus:outline-none focus:border-[#e91e63] bg-[#16143a] text-white placeholder-gray-500"
           />
         </div>
 
@@ -105,7 +120,7 @@ export default function WhatFilter({
         <div className="flex gap-3">
           <button
             onClick={handleClear}
-            className="flex-1 py-2 px-4 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="flex-1 py-2 px-4 rounded-lg border border-[rgba(255,255,255,0.15)] text-sm font-medium text-gray-400 hover:bg-[rgba(255,255,255,0.05)]"
           >
             Clear
           </button>

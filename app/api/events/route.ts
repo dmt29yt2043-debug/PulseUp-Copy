@@ -8,8 +8,8 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
 
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const page_size = parseInt(searchParams.get('page_size') || '20', 10);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+    const page_size = Math.min(100, Math.max(1, parseInt(searchParams.get('page_size') || '20', 10) || 20));
 
     const filters: FilterState & { page: number; page_size: number } = {
       page,
@@ -21,22 +21,35 @@ export async function GET(request: NextRequest) {
       filters.categories = categoriesParam.split(',').map((s) => s.trim());
     }
 
-    const excludeCategoriesParam = searchParams.get('exclude_categories');
+    // Support both camelCase and snake_case param names
+    const excludeCategoriesParam = searchParams.get('excludeCategories') || searchParams.get('exclude_categories');
     if (excludeCategoriesParam) {
       filters.excludeCategories = excludeCategoriesParam.split(',').map((s) => s.trim());
     }
 
     const priceMin = searchParams.get('price_min');
-    if (priceMin) filters.priceMin = parseFloat(priceMin);
+    if (priceMin !== null && priceMin !== '') filters.priceMin = parseFloat(priceMin);
 
     const priceMax = searchParams.get('price_max');
-    if (priceMax) filters.priceMax = parseFloat(priceMax);
+    if (priceMax !== null && priceMax !== '') filters.priceMax = parseFloat(priceMax);
 
     const isFree = searchParams.get('is_free');
     if (isFree !== null) filters.isFree = isFree === 'true';
 
     const age = searchParams.get('age');
     if (age) filters.ageMax = parseInt(age, 10);
+
+    // Multi-child filter: comma-separated list of ages, e.g. "5,9".
+    // When provided, this overrides single-age behavior — events must
+    // suit at least one of the children.
+    const childAgesParam = searchParams.get('child_ages');
+    if (childAgesParam) {
+      const ages = childAgesParam
+        .split(',')
+        .map((s) => parseInt(s.trim(), 10))
+        .filter((n) => Number.isFinite(n) && n >= 0 && n <= 18);
+      if (ages.length > 0) filters.childAges = ages;
+    }
 
     const dateFrom = searchParams.get('date_from');
     if (dateFrom) filters.dateFrom = dateFrom;

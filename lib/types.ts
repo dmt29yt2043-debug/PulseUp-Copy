@@ -30,6 +30,9 @@ export interface Event {
   rating_avg: number;
   rating_count: number;
   data: EventData;
+  // Per-request: which of the user's children (by age) this event suits.
+  // Set only when the request includes child_ages and there are >=2 children.
+  fit_child_ages?: number[];
 }
 
 export interface ReviewItem {
@@ -65,6 +68,11 @@ export interface EventData {
   tickets_available?: number;
 }
 
+export interface FilterChild {
+  age: number;
+  gender: 'boy' | 'girl' | 'other';
+}
+
 export interface FilterState {
   categories?: string[];
   excludeCategories?: string[];
@@ -72,6 +80,8 @@ export interface FilterState {
   priceMax?: number;
   isFree?: boolean;
   ageMax?: number;
+  childAges?: number[];
+  filterChildren?: FilterChild[];
   dateFrom?: string;
   dateTo?: string;
   lat?: number;
@@ -79,6 +89,9 @@ export interface FilterState {
   distance?: number;
   search?: string;
   neighborhoods?: string[];
+  location?: string;
+  wheelchairAccessible?: boolean;
+  strollerFriendly?: boolean;
 }
 
 export interface ChildProfile {
