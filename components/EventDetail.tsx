@@ -78,9 +78,24 @@ function formatTime(dateStr: string): string {
 
 function priceLabel(event: Event): string {
   if (event.is_free) return 'Free';
-  if (event.price_summary) return event.price_summary;
-  if (event.price_min > 0 && event.price_max > 0) return `$${event.price_min}–$${event.price_max}`;
-  if (event.price_min > 0) return `$${event.price_min}+`;
+  // Extract all dollar amounts from price_summary to build a clean range
+  if (event.price_summary) {
+    const amounts = [...event.price_summary.matchAll(/\$[\d,]+(?:\.\d{1,2})?/g)]
+      .map((m) => parseFloat(m[0].replace(/[$,]/g, '')))
+      .filter((n) => n > 0);
+    if (amounts.length >= 2) {
+      const lo = Math.min(...amounts);
+      const hi = Math.max(...amounts);
+      if (lo === hi) return `$${lo}`;
+      return `$${lo}–$${hi.toLocaleString()}`;
+    }
+    if (amounts.length === 1) return `$${amounts[0]}`;
+    // No dollar amounts found — show summary as-is if short enough
+    if (event.price_summary.length <= 25) return event.price_summary;
+  }
+  if (event.price_min > 0 && event.price_max > 0 && event.price_min !== event.price_max)
+    return `$${event.price_min}–$${event.price_max}`;
+  if (event.price_min > 0) return `$${event.price_min}`;
   return '—';
 }
 
@@ -100,7 +115,7 @@ function MetaBar({ event }: { event: Event }) {
       {cols.map((c, i) => (
         <div key={i} className="ed-meta-col">
           <span className="ed-meta-label">{c.label}</span>
-          <span className={`ed-meta-value${c.label === 'PRICE' && event.is_free ? ' ed-free' : ''}`}>
+          <span className={`ed-meta-value${c.label === 'PRICE' && event.is_free ? ' ed-free' : ''}${c.label === 'PRICE' ? ' ed-meta-value-price' : ''}`}>
             {c.value}
           </span>
         </div>

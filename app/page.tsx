@@ -12,6 +12,7 @@ import BudgetFilter from '@/components/FilterDialogs/BudgetFilter';
 import WhoFilter from '@/components/FilterDialogs/WhoFilter';
 import WhereFilter from '@/components/FilterDialogs/WhereFilter';
 import EventCardV2 from '@/components/EventCardV2';
+import DateBar from '@/components/DateBar';
 import FavoritesPanel from '@/components/FavoritesPanel';
 import { FavoritesProvider, useFavorites } from '@/lib/FavoritesContext';
 import type { MapBounds } from '@/components/discovery/discovery-state';
@@ -149,8 +150,8 @@ function HomeInner() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('page_size', String(PAGE_SIZE));
+      params.set('page', '1');
+      params.set('page_size', '500');
 
       if (filters.categories && filters.categories.length > 0) {
         params.set('categories', filters.categories.join(','));
@@ -174,8 +175,15 @@ function HomeInner() {
         : undefined;
       if (kidsForFilter && kidsForFilter.length >= 2) {
         params.set('child_ages', kidsForFilter.map((c) => c.age).join(','));
+        // Pass genders so the API can exclude gender-mismatched events
+        const genders = kidsForFilter.map((c) => c.gender).join(',');
+        params.set('child_genders', genders);
       } else if (filters.ageMax !== undefined) {
         params.set('age', String(filters.ageMax));
+        // Single-child mode: derive gender from filterChildren if available
+        if (kidsForFilter && kidsForFilter.length === 1) {
+          params.set('child_genders', kidsForFilter[0].gender);
+        }
       }
       if (filters.dateFrom) {
         params.set('date_from', filters.dateFrom);
@@ -193,6 +201,9 @@ function HomeInner() {
       }
       if (filters.neighborhoods && filters.neighborhoods.length > 0) {
         params.set('neighborhoods', filters.neighborhoods.join(','));
+      }
+      if (filters.ratingMin !== undefined) {
+        params.set('rating_min', String(filters.ratingMin));
       }
 
       const res = await fetch(`/api/events?${params.toString()}`);
@@ -384,13 +395,14 @@ function HomeInner() {
 
   // Filter dialog handlers
   const handleWhatApply = useCallback(
-    (included: string[], excluded: string[], search: string) => {
-      track('filter_applied', { filter_name: 'what', filter_value: { categories: included, search } });
+    (included: string[], excluded: string[], search: string, highRating: boolean) => {
+      track('filter_applied', { filter_name: 'what', filter_value: { categories: included, search, highRating } });
       setFilters((prev) => ({
         ...prev,
         categories: included.length > 0 ? included : undefined,
         excludeCategories: excluded.length > 0 ? excluded : undefined,
         search: search || undefined,
+        ratingMin: highRating ? 4.5 : undefined,
       }));
       setPage(1);
       setActiveTab('foryou');
@@ -409,6 +421,17 @@ function HomeInner() {
     setPage(1);
     setActiveTab('foryou');
     setOpenFilter(null);
+  }, []);
+
+  const handleDateBarSelect = useCallback((date: string | undefined) => {
+    track('filter_applied', { filter_name: 'datebar', filter_value: date });
+    setFilters((prev) => ({
+      ...prev,
+      dateFrom: date || undefined,
+      dateTo: date || undefined,
+    }));
+    setPage(1);
+    if (date) setActiveTab('foryou');
   }, []);
 
   const handleBudgetApply = useCallback(
@@ -487,22 +510,21 @@ function HomeInner() {
       {/* ===== Header ===== */}
       <header className="v2-header">
         {/* Logo */}
-        <button onClick={() => window.location.reload()} className="v2-header-logo" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+        <button onClick={() => { localStorage.removeItem('pulseup_profile'); window.location.replace(window.location.pathname); }} className="v2-header-logo" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
           <img src="/logo.png" alt="Pulse" style={{ height: 36, width: 'auto' }} />
         </button>
 
         {/* Center: title + tabs */}
         <div className="flex items-center gap-4">
           <div className="v2-header-center">
-            <span className="v2-header-title">Events for you</span>
-            <span className="v2-header-subtitle">Curated NYC experiences</span>
+            <span className="v2-header-title">Epic kids events in NYC</span>
           </div>
           <div className="v2-header-tabs">
             <button
               className={`v2-header-tab ${activeTab === 'feed' ? 'active' : ''}`}
               onClick={() => { track('tab_switched', { tab: 'feed' }); setActiveTab('feed'); }}
             >
-              Feed ({allTotal})
+              All ({allTotal})
             </button>
             <button
               className={`v2-header-tab ${activeTab === 'foryou' ? 'active' : ''}`}
@@ -708,14 +730,11 @@ function HomeInner() {
             </div>
           ) : (
             <>
-              <div className="results-header">
-                <span className="text-xs">
-                  {favoritesOnly
-                    ? `${favoriteIds.size} saved events`
-                    : boundsFiltered
-                    ? `${displayEvents.length} events in this area`
-                    : `${displayTotal} events`}
-                </span>
+              <div className="results-sticky-top">
+                <DateBar
+                  selectedDate={filters.dateFrom === filters.dateTo ? filters.dateFrom : undefined}
+                  onSelect={handleDateBarSelect}
+                />
               </div>
               <div className={mapExpanded ? 'results-list results-list--2col' : 'results-list'}>
                 {displayEvents.map((event) => (
@@ -794,6 +813,7 @@ function HomeInner() {
           includedCategories={filters.categories || []}
           excludedCategories={filters.excludeCategories || []}
           search={filters.search || ''}
+          highRating={filters.ratingMin !== undefined && filters.ratingMin >= 4.5}
           onApply={handleWhatApply}
           onClose={() => setOpenFilter(null)}
         />

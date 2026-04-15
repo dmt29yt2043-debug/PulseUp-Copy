@@ -81,6 +81,7 @@ export interface FilterState {
   isFree?: boolean;
   ageMax?: number;
   childAges?: number[];
+  childGenders?: ('boy' | 'girl' | 'other')[];
   filterChildren?: FilterChild[];
   dateFrom?: string;
   dateTo?: string;
@@ -90,6 +91,7 @@ export interface FilterState {
   search?: string;
   neighborhoods?: string[];
   location?: string;
+  ratingMin?: number;
   wheelchairAccessible?: boolean;
   strollerFriendly?: boolean;
 }

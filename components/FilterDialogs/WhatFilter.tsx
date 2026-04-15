@@ -14,7 +14,8 @@ interface WhatFilterProps {
   includedCategories: string[];
   excludedCategories: string[];
   search: string;
-  onApply: (included: string[], excluded: string[], search: string) => void;
+  highRating?: boolean;
+  onApply: (included: string[], excluded: string[], search: string, highRating: boolean) => void;
   onClose: () => void;
 }
 
@@ -23,6 +24,7 @@ export default function WhatFilter({
   includedCategories,
   excludedCategories,
   search: initialSearch,
+  highRating: initialHighRating = false,
   onApply,
   onClose,
 }: WhatFilterProps) {
@@ -40,6 +42,7 @@ export default function WhatFilter({
     return states;
   });
   const [search, setSearch] = useState(initialSearch);
+  const [highRating, setHighRating] = useState(initialHighRating);
 
   // Sync internal state when parent props change (e.g. global Reset)
   useEffect(() => {
@@ -55,6 +58,10 @@ export default function WhatFilter({
   useEffect(() => {
     setSearch(initialSearch);
   }, [initialSearch]);
+
+  useEffect(() => {
+    setHighRating(initialHighRating);
+  }, [initialHighRating]);
 
   const cycleState = (slug: string) => {
     setChipStates((prev) => {
@@ -72,7 +79,7 @@ export default function WhatFilter({
     const excluded = Object.entries(chipStates)
       .filter(([, state]) => state === 'exclude')
       .map(([slug]) => slug);
-    onApply(included, excluded, search);
+    onApply(included, excluded, search, highRating);
   };
 
   const handleClear = () => {
@@ -82,12 +89,24 @@ export default function WhatFilter({
     });
     setChipStates(cleared);
     setSearch('');
+    setHighRating(false);
   };
 
   return (
     <div className="filter-dialog-backdrop" onClick={onClose}>
       <div className="filter-dialog" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold mb-4 text-white">What are you looking for?</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-white">What are you looking for?</h3>
+          <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-300 hover:text-white">
+            <input
+              type="checkbox"
+              checked={highRating}
+              onChange={(e) => setHighRating(e.target.checked)}
+              style={{ accentColor: '#ffc107', width: 16, height: 16 }}
+            />
+            <span>★ Rated 4.5 & up</span>
+          </label>
+        </div>
 
         <div className="mb-4">
           <input

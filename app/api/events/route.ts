@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
 
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
-    const page_size = Math.min(100, Math.max(1, parseInt(searchParams.get('page_size') || '20', 10) || 20));
+    const page_size = Math.min(600, Math.max(1, parseInt(searchParams.get('page_size') || '20', 10) || 20));
 
     const filters: FilterState & { page: number; page_size: number } = {
       page,
@@ -51,6 +51,16 @@ export async function GET(request: NextRequest) {
       if (ages.length > 0) filters.childAges = ages;
     }
 
+    // Child genders for gender-fit filtering
+    const childGendersParam = searchParams.get('child_genders');
+    if (childGendersParam) {
+      const genders = childGendersParam
+        .split(',')
+        .map((s) => s.trim().toLowerCase())
+        .filter((g): g is 'boy' | 'girl' | 'other' => ['boy', 'girl', 'other'].includes(g));
+      if (genders.length > 0) filters.childGenders = genders;
+    }
+
     const dateFrom = searchParams.get('date_from');
     if (dateFrom) filters.dateFrom = dateFrom;
 
@@ -71,6 +81,9 @@ export async function GET(request: NextRequest) {
 
     const neighborhoods = searchParams.get('neighborhoods');
     if (neighborhoods) filters.neighborhoods = neighborhoods.split(',').map((s) => s.trim());
+
+    const ratingMin = searchParams.get('rating_min');
+    if (ratingMin !== null && ratingMin !== '') filters.ratingMin = parseFloat(ratingMin);
 
     const result = getEvents(filters);
 

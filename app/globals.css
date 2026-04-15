@@ -422,17 +422,99 @@ body {
   background: var(--bg-deep) !important;
 }
 
-.results-header {
-  padding: 10px 16px 6px;
+.results-sticky-top {
   position: sticky;
   top: 0;
+  z-index: 10;
+  background: var(--bg-deep);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+.results-header {
+  padding: 10px 16px 6px;
   background: var(--bg-deep) !important;
-  z-index: 2;
-  border-bottom: 1px solid var(--border-color) !important;
 }
 
 .results-header span {
   color: var(--text-secondary) !important;
+}
+
+/* ── Date bar ── */
+.datebar-wrapper {
+  padding: 3px 12px 2px;
+  background: var(--bg-deep);
+}
+.datebar-scroll {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  align-items: flex-end;
+}
+.datebar-scroll::-webkit-scrollbar { display: none; }
+.datebar-cell-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 40px;
+}
+.datebar-month {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--primary);
+  text-transform: uppercase;
+  height: 12px;
+  line-height: 12px;
+  align-self: flex-start;
+  padding-left: 2px;
+}
+.datebar-month-spacer {
+  height: 12px;
+}
+.datebar-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.datebar-cell:hover {
+  background: rgba(255,255,255,0.06);
+}
+.datebar-cell.today {
+  border-color: rgba(255,255,255,0.2);
+}
+.datebar-cell.weekend .datebar-day {
+  color: var(--primary-light);
+}
+.datebar-cell.active {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.datebar-cell.active .datebar-day,
+.datebar-cell.active .datebar-dow {
+  color: white;
+}
+.datebar-day {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  line-height: 1;
+}
+.datebar-dow {
+  font-size: 0.5rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 /* 3-column card grid */
@@ -701,6 +783,14 @@ body {
 
 .event-card-v2-price.free {
   background: #22c55e;
+}
+
+.event-card-v2-rating {
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffc107;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* Map column (sticky, fills remaining space) */
@@ -1377,6 +1467,12 @@ body {
   text-overflow: ellipsis;
 }
 .ed-meta-value.ed-free { color: #22c55e; }
+.ed-meta-value.ed-meta-value-price {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: break-word;
+}
 
 /* Quick info block — address, subway, badges */
 .ed-quick-info {

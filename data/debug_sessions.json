@@ -1,11 +1,11 @@
 {
-  "next_id": 2,
+  "next_id": 4,
   "sessions": [
     {
       "id": 1,
       "started_at": "2026-04-10T17:17:46.612Z",
-      "ended_at": null,
-      "status": "active",
+      "ended_at": "2026-04-14T11:42:51.336Z",
+      "status": "closed",
       "filters": {
         "ageMax": 9
       },
@@ -29,6 +29,108 @@
           "age_best_to": 10,
           "reason": "wrong_age_range",
           "flagged_at": "2026-04-10T17:18:19.934Z"
+        },
+        {
+          "event_id": 1107,
+          "title": "Children's Crafty Afternoons",
+          "age_label": "Ages 3–12",
+          "age_min": 3,
+          "age_best_from": 3,
+          "age_best_to": 12,
+          "reason": "wrong_age_range",
+          "flagged_at": "2026-04-14T11:38:44.604Z"
+        },
+        {
+          "event_id": 1243,
+          "title": "Spring Break - Kids with Autism & Parents",
+          "age_label": "Ages 2–15",
+          "age_min": 2,
+          "age_best_from": 2,
+          "age_best_to": 15,
+          "reason": "wrong_age_range",
+          "flagged_at": "2026-04-14T11:42:40.258Z"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "started_at": "2026-04-14T16:27:21.971Z",
+      "ended_at": "2026-04-14T16:27:58.306Z",
+      "status": "closed",
+      "filters": {
+        "ageMax": 9,
+        "filterChildren": [
+          {
+            "age": 9,
+            "gender": "boy"
+          },
+          {
+            "age": 6,
+            "gender": "boy"
+          }
+        ]
+      },
+      "flags": [
+        {
+          "event_id": 102,
+          "title": "RECESS!! Epic Interactive Family Fun at a Surreal Playground!",
+          "age_label": "Ages 2–10",
+          "age_min": null,
+          "age_best_from": 2,
+          "age_best_to": 10,
+          "reason": "wrong_age_range",
+          "flagged_at": "2026-04-14T16:27:21.972Z"
+        },
+        {
+          "event_id": 277,
+          "title": "The Orchid Show: Mr. Flower Fantastic’s Concrete Jungle",
+          "age_label": "Ages 3–12",
+          "age_min": null,
+          "age_best_from": 3,
+          "age_best_to": 12,
+          "reason": "wrong_age_range",
+          "flagged_at": "2026-04-14T16:27:23.993Z"
+        },
+        {
+          "event_id": 132,
+          "title": "CAMP New York City",
+          "age_label": "Ages 3–10",
+          "age_min": 3,
+          "age_best_from": 3,
+          "age_best_to": 10,
+          "reason": "wrong_age_range",
+          "flagged_at": "2026-04-14T16:27:26.127Z"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "started_at": "2026-04-15T09:37:36.074Z",
+      "ended_at": "2026-04-15T09:38:38.282Z",
+      "status": "closed",
+      "filters": {
+        "ageMax": 9,
+        "filterChildren": [
+          {
+            "age": 9,
+            "gender": "boy"
+          },
+          {
+            "age": 6,
+            "gender": "boy"
+          }
+        ]
+      },
+      "flags": [
+        {
+          "event_id": 1002,
+          "title": "The Rock and Roll Playhouse Plays Music of Blink-182",
+          "age_label": "Ages 1–6",
+          "age_min": null,
+          "age_best_from": 1,
+          "age_best_to": 6,
+          "reason": "wrong_age_range",
+          "flagged_at": "2026-04-15T09:37:36.075Z"
         }
       ]
     }

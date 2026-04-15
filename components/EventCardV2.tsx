@@ -128,30 +128,6 @@ export default function EventCardV2({
       {event.age_label && (
         <span className="event-card-v2-age">{event.age_label}</span>
       )}
-      {event.fit_child_ages && event.fit_child_ages.length > 0 && (
-        <span
-          className="event-card-v2-fit"
-          title="This event suits only some of your children"
-        >
-          Best for age {event.fit_child_ages.join(' & ')}
-        </span>
-      )}
-
-      {/* ── Wrong-age debug checkbox ── */}
-      {onToggleFlag && (
-        <label
-          className={`event-card-v2-flag ${isFlagged ? 'checked' : ''}`}
-          onClick={(e) => e.stopPropagation()}
-          title="Mark as wrong age range"
-        >
-          <input
-            type="checkbox"
-            checked={isFlagged}
-            onChange={(e) => onToggleFlag(event, e.target.checked)}
-          />
-          <span>Wrong age</span>
-        </label>
-      )}
 
       {/* ── Heart ── */}
       <button className="event-card-v2-fav" onClick={handleLike} aria-label="Save">
@@ -174,11 +150,18 @@ export default function EventCardV2({
 
         <div className="event-card-v2-bottom">
           <span className="event-card-v2-date">{dateText}</span>
-          {priceText && (
-            <span className={`event-card-v2-price ${event.is_free ? 'free' : ''}`}>
-              {priceText}
-            </span>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {event.rating_avg > 0 && (
+              <span className="event-card-v2-rating">
+                ★ {event.rating_avg.toFixed(1)}
+              </span>
+            )}
+            {priceText && (
+              <span className={`event-card-v2-price ${event.is_free ? 'free' : ''}`}>
+                {priceText}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>

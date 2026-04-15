@@ -166,11 +166,13 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
   //      declared upper bound reaches 10, a "Toddler Music Class" isn't
   //      what a 9-year-old wants.
   //
-  //   3. No edge-at-top-of-wide-range: reject events where the child sits
-  //      at (or within 1 year of) the upper bound AND the range extends 5+
-  //      years below the child. This catches generic "family fun" venues
-  //      skewed to little kids but nominally listed as 2–10 / 3–10.
-  //      e.g. child 9 vs event 2-10 → excluded; child 9 vs 5-10 → kept.
+  //   3. No wide-toddler-range: reject events where the range starts 3+
+  //      years below the child (i.e. starts in toddler territory for this
+  //      child), the range is wide (≥7 years), and it's a kids' event
+  //      (upper bound ≤18, not an "all ages" 0-100 community event).
+  //      Only applies to school-age kids (N ≥ 6).
+  //      e.g. child 6 vs event 2-10 → excluded; child 6 vs 4-10 → kept.
+  //      e.g. child 9 vs event 3-12 → excluded; child 9 vs 6-12 → kept.
   //
   // `buildAgeFitSql(paramKey)` produces the SQL for a single child age bound
   // to a named parameter.
@@ -202,11 +204,22 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
       ` AND (age_best_to IS NULL OR age_best_to >= @${paramKey})` +
       // (2) toddler-label exclusion for school-age kids (>= 6)
       ` AND NOT (@${paramKey} >= 6 AND (${toddlerConds}))` +
-      // (3) child sits at top of wide young-skewed range
+      // (3) wide range starting in toddler territory for this child
       ' AND NOT (' +
-        'age_best_to IS NOT NULL AND age_best_from IS NOT NULL' +
-        ` AND @${paramKey} >= age_best_to - 1` +
-        ` AND age_best_from <= @${paramKey} - 5` +
+        `@${paramKey} >= 6` +
+        ' AND age_best_to IS NOT NULL AND age_best_from IS NOT NULL' +
+        ' AND age_best_to <= 18' +
+        ' AND (age_best_to - age_best_from) >= 7' +
+        ` AND age_best_from <= @${paramKey} - 3` +
+      ')' +
+      // (4) top-of-toddler-range: child is at the very top of a small
+      //     range that starts in baby/toddler territory (from ≤ 2).
+      //     e.g. child 6 vs event 1-6 → excluded; child 6 vs 3-6 → kept.
+      ' AND NOT (' +
+        `@${paramKey} >= 6` +
+        ' AND age_best_to IS NOT NULL AND age_best_from IS NOT NULL' +
+        ` AND @${paramKey} >= age_best_to` +
+        ' AND age_best_from <= 2' +
       ')' +
     ')';
 
@@ -243,6 +256,12 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
   if (filters.location) {
     params.location = `%${filters.location}%`;
     conditions.push('(venue_name LIKE @location OR address LIKE @location OR city LIKE @location)');
+  }
+
+  // Rating filter
+  if (filters.ratingMin !== undefined) {
+    params.rating_min = filters.ratingMin;
+    conditions.push('rating_avg >= @rating_min');
   }
 
   // Fix 3: Accessibility filters (search in JSON data field)
@@ -282,6 +301,18 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
     if (combined) conditions.push(`(${combined})`);
   }
 
+  // Gender-fit filter: exclude events tagged for a different gender.
+  // Only applied when ALL children share the same gender (boy or girl).
+  if (filters.childGenders && filters.childGenders.length > 0) {
+    const unique = [...new Set(filters.childGenders)];
+    if (unique.length === 1 && unique[0] !== 'other') {
+      // All children are the same gender — exclude events for the opposite gender
+      const oppositeGender = unique[0] === 'boy' ? 'girl' : 'boy';
+      params.excludeGender = oppositeGender;
+      conditions.push("(gender_fit IS NULL OR gender_fit = 'all' OR gender_fit != @excludeGender)");
+    }
+  }
+
   let distanceSelect = '';
   let distanceCondition = '';
   // Prioritize NYC events with coordinates over nationwide ones
@@ -307,29 +338,27 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
   db.function('cos', (x: number) => Math.cos(x));
   db.function('sin', (x: number) => Math.sin(x));
 
-  // Count query
-  const countSql = `SELECT COUNT(*) as count FROM events WHERE ${whereClause} ${distanceCondition}`;
-  const countRow = db.prepare(countSql).get(params) as { count: number };
-  const total = countRow.count;
-
-  // Data query
-  const page = filters.page ?? 1;
-  const pageSize = filters.page_size ?? 20;
-  const offset = (page - 1) * pageSize;
-  params.limit = pageSize;
-  params.offset = offset;
-
-  const dataSql = `SELECT *${distanceSelect} FROM events WHERE ${whereClause} ${distanceCondition} ${orderBy} LIMIT @limit OFFSET @offset`;
-  const rows = db.prepare(dataSql).all(params) as Record<string, unknown>[];
+  // Data query — fetch ALL matching rows, then deduplicate and paginate in JS.
+  // The dataset is small (~600 rows) so this is fast and ensures accurate totals.
+  const allSql = `SELECT *${distanceSelect} FROM events WHERE ${whereClause} ${distanceCondition} ${orderBy}`;
+  const allRows = db.prepare(allSql).all(params) as Record<string, unknown>[];
 
   // Deduplicate by title + venue_name (some events appear twice with different pricing tiers)
   const seen = new Set<string>();
-  const deduped = rows.filter((row) => {
+  const dedupedAll = allRows.filter((row) => {
     const key = `${(row.title as string || '').toLowerCase()}|${(row.venue_name as string || '').toLowerCase()}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
+
+  const total = dedupedAll.length;
+
+  // Paginate after dedup so total always matches actual results
+  const page = filters.page ?? 1;
+  const pageSize = filters.page_size ?? 20;
+  const offset = (page - 1) * pageSize;
+  const deduped = dedupedAll.slice(offset, offset + pageSize);
 
   const events = deduped.map(parseEventRow);
 
@@ -356,11 +385,20 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
       if (hi != null && hi < age) return false;
       // Toddler-label exclusion for school-age kids
       if (age >= 6 && hasToddlerLabel(ev)) return false;
-      // Edge-at-top-of-wide-range exclusion
+      // Wide-toddler-range exclusion (mirrors SQL rule 3)
       if (
+        age >= 6 &&
         hi != null && lo != null &&
-        age >= hi - 1 &&
-        lo <= age - 5
+        hi <= 18 &&
+        (hi - lo) >= 7 &&
+        lo <= age - 3
+      ) return false;
+      // Top-of-toddler-range exclusion (mirrors SQL rule 4)
+      if (
+        age >= 6 &&
+        hi != null && lo != null &&
+        age >= hi &&
+        lo <= 2
       ) return false;
       return true;
     };
@@ -380,7 +418,7 @@ export function getEvents(filters: FilterState & { page?: number; page_size?: nu
 
   return {
     events,
-    total: Math.max(total - (rows.length - deduped.length), deduped.length),
+    total,
   };
 }
 
