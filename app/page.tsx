@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import type { Event, FilterState } from '@/lib/types';
 import { initAnalytics, trackEvent as track } from '@/lib/analytics';
+import { initResearchTracker } from '@/lib/research-tracker';
 import EventDetail from '@/components/EventDetail';
 import ChatSidebar from '@/components/ChatSidebar';
 import WhatFilter from '@/components/FilterDialogs/WhatFilter';
@@ -100,6 +101,7 @@ function HomeInner() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       initAnalytics();
+      initResearchTracker(); // activates only when ?research_session= present
       const params = new URLSearchParams(window.location.search);
       if (params.get('source') === 'quiz') setActiveTab('foryou');
     }
